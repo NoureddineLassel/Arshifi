@@ -250,6 +250,10 @@ table.list .t{font-weight:600}
 .choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
 .choice article{border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
 .choice article.rec{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2)}
+.choice article[role=button]{cursor:pointer;transition:border-color .15s,transform .15s}
+.choice article[role=button]:hover{border-color:var(--accent);transform:translateY(-1px)}
+.pick-err{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.8;margin-bottom:12px}
+.pick-err b{display:block}
 .choice h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
 .choice p{margin:0;color:var(--muted);font-size:13px;line-height:1.75;flex:1}
 .choice .badge{font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 8px;font-weight:600}
@@ -317,7 +321,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.1.1";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
@@ -1320,6 +1324,7 @@ document.addEventListener("keydown", async e => {
     let tg = S.tax.tags.find(x => norm(x.name) === norm(v)); if (!tg) { tg = E(v, "", "auto"); S.tax.tags.push(tg); await persistTax(); }
     if (!d.tags.includes(tg.id)) d.tags.push(tg.id); await persistDoc(d); render(); setTimeout(() => $("#f-tagin")?.focus(), 0); return;
   }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); return; }
   if (e.key === "Escape") { if ($("#modalLayer")) closeModal(); else if (S.open) closeDrawer(); else if ($("#side").classList.contains("open")) $("#side").classList.remove("open"); }
   if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) { e.preventDefault(); $("#q").focus(); }
 });
@@ -1367,11 +1372,25 @@ async function useFolder(handle, migrate) {
   await setStorageChoice(S.local, { mode: "folder", handle });
   await loadInto(fs);
 }
+function pickError(title, body) {
+  const box = $("#pickErr");
+  if (box) { box.innerHTML = `<b>${esc(title)}</b>${esc(body)}`; box.hidden = false; box.scrollIntoView({ block: "nearest" }); }
+  else toast(title + " " + body, 9000);
+}
 async function chooseFolder(migrate) {
-  if (!FS_OK) { toast("اختيار المجلدات يتطلب متصفح Chrome أو Edge"); return; }
-  let h; try { h = await window.showDirectoryPicker({ id: "arshifi", mode: "readwrite", startIn: "documents" }); }
-  catch (e) { if (e.name !== "AbortError") toast("تعذر فتح المجلد: " + (e.message || e)); return; }
-  if (await folderPermission(h, true) !== "granted") { toast("لم يُمنح إذن الكتابة في المجلد"); return; }
+  if (!FS_OK) { pickError("هذا المتصفح لا يدعم اختيار المجلدات.", "افتح أرشيفي في Google Chrome أو Microsoft Edge (وليس Safari)."); return; }
+  if (window.top !== window) { pickError("التطبيق مفتوح داخل نافذة معاينة.", "نوافذ المعاينة لا تسمح باختيار المجلدات. افتح أرشيفي مباشرة في Chrome: من رابط Netlify، أو بسحب ملف index.html إلى نافذة Chrome."); return; }
+  const t0 = Date.now(); let h;
+  try { h = await window.showDirectoryPicker({ id: "arshifi", mode: "readwrite", startIn: "documents" }); }
+  catch (e) {
+    console.warn("showDirectoryPicker", e);
+    if (e.name === "AbortError" && Date.now() - t0 > 700) return; // ألغيتَ الاختيار بنفسك
+    if (e.name === "SecurityError") pickError("رفض Chrome فتح نافذة اختيار المجلد في هذا السياق.", "افتح أرشيفي مباشرة في نافذة Chrome عادية (رابط Netlify أو ملف index.html)، لا من داخل تطبيق آخر أو معاينة.");
+    else pickError("لم يتمكن Chrome من عرض نافذة اختيار المجلد.", `أعد المحاولة بالضغط على الزر مباشرة. إن تكرر ذلك فحدّث Chrome إلى آخر إصدار من القائمة ⋮ ← مساعدة ← حول Google Chrome. (${e.name}: ${e.message || ""})`);
+    return;
+  }
+  let perm; try { perm = await folderPermission(h, true); } catch (e) { perm = "denied"; }
+  if (perm !== "granted") { pickError("لم يُمنح إذن الكتابة في المجلد.", "أعد الاختيار ووافق على «تعديل الملفات» عندما يسألك Chrome."); return; }
   await useFolder(h, migrate);
 }
 async function useBrowserStorage() { await setStorageChoice(S.local, { mode: "local" }); await loadInto(S.local || MEMORY_STORE()); }
@@ -1385,11 +1404,14 @@ function showLock(name) {
   $("#main").innerHTML = `<div class="lock"><h3>أرشيفك في مجلد «${esc(name)}»</h3><p>يطلب المتصفح إذنك لفتح المجلد في كل جلسة. لتجنّب هذا السؤال اختر «السماح في كل زيارة» عند ظهوره.</p><div class="actions"><button class="btn primary" data-act="grant">فتح الأرشيف</button><button class="btn" data-act="pick-folder">اختيار مجلد آخر</button></div></div>`;
 }
 function showWelcome() {
-  openModal(`<header><h2>أين تريد حفظ أرشيفك؟</h2></header><div class="content"><div class="choice">
-    <article class="rec"><h3>مجلد على جهازك أو في iCloud Drive <span class="badge">مستحسن</span></h3>
-      <p>أنشئ في Finder مجلداً باسم «أرشيفي» داخل iCloud Drive، ثم اختره هنا. تُحفظ فيه الملفات الأصلية بأسماء مقروءة مع بطاقات فهرستها، فيتزامن الأرشيف تلقائياً بين أجهزة الماك. على جهاز ماك آخر اختر المجلد نفسه فيفتح الأرشيف كما هو.</p>
+  const framed = window.top !== window;
+  openModal(`<header><h2>أين تريد حفظ أرشيفك؟</h2></header><div class="content">
+    <div id="pickErr" class="pick-err" ${framed ? "" : "hidden"}>${framed ? "<b>التطبيق مفتوح داخل نافذة معاينة.</b>نوافذ المعاينة لا تسمح باختيار المجلدات. افتح أرشيفي مباشرة في Chrome: من رابط Netlify، أو بسحب ملف index.html إلى نافذة Chrome." : ""}</div>
+    <div class="choice">
+    <article class="rec" ${FS_OK ? 'role="button" tabindex="0" data-act="pick-folder"' : ""}><h3>مجلد على جهازك أو في iCloud Drive <span class="badge">مستحسن</span></h3>
+      <p>أنشئ في Finder مجلداً باسم «أرشيفي» داخل iCloud Drive، ثم اختره هنا (اختر المجلد الفرعي نفسه، لا iCloud Drive كله ولا «المستندات»، فـ Chrome يرفض المجلدات الرئيسية). تُحفظ فيه الملفات الأصلية بأسماء مقروءة مع بطاقات فهرستها، فيتزامن الأرشيف تلقائياً بين أجهزة الماك. على جهاز ماك آخر اختر المجلد نفسه فيفتح الأرشيف كما هو.</p>
       ${FS_OK ? `<button class="btn primary" data-act="pick-folder">اختيار المجلد…</button>` : `<p style="color:var(--warn)">هذا المتصفح لا يسمح للتطبيقات بالكتابة في المجلدات. افتح أرشيفي في Chrome أو Edge لاستعمال هذا الخيار.</p>`}</article>
-    <article><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق في هذا المتصفح على هذا الجهاز، دون مزامنة. يمكنك نقلها إلى مجلد لاحقاً من الإعدادات.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
+    <article role="button" tabindex="0" data-act="use-browser"><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق في هذا المتصفح على هذا الجهاز، دون مزامنة. يمكنك نقلها إلى مجلد لاحقاً من الإعدادات.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
   </div></div>`);
 }
 let syncing = false;
