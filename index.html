@@ -170,6 +170,14 @@ table.list .t{font-weight:600}
 .tl-item .tt{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .tl-item .ts{font-size:11px;color:var(--muted)}
 
+.card.picking .thumb::after{content:"";position:absolute;bottom:8px;right:8px;width:22px;height:22px;border-radius:50%;border:2px solid var(--faint);background:var(--surface)}
+.card.picked{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.card.picked .thumb::after{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--accent)}
+tr.picked td{background:var(--accent-2)}
+.tl-item.picked{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.selbar{position:sticky;top:calc(63px + env(safe-area-inset-top,0px));z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;margin-bottom:12px;box-shadow:var(--shadow);font-size:13px}
+.selbar b{margin-left:auto}
+.trash-note{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
 .empty{border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;color:var(--muted);background:var(--surface)}
 .empty h3{font-family:var(--f-display);color:var(--ink);font-size:20px;margin:0 0 6px}
 .more{display:flex;justify-content:center;margin-top:18px}
@@ -322,7 +330,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.3.0";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
@@ -560,7 +568,7 @@ const S = {
   store: null, docs: [], tax: null, demo: false, demoDismissed: false,
   sel: { kind: "all" }, q: "", view: "grid", sort: "added-desc", page: 1,
   open: null, tab: "info", side: false, caps: { sample: null, imgs: null, downloads: null },
-  queue: [], aiBusy: {},
+  queue: [], aiBusy: {}, selMode: false, picked: new Set(), confirmBulk: null,
 };
 try { const p = JSON.parse(localStorage.getItem("arshifi.ui") || "{}"); if (p.view) S.view = p.view; if (p.sort) S.sort = p.sort; S.demoDismissed = !!p.demoDismissed; } catch (e) {}
 function saveUI() { try { localStorage.setItem("arshifi.ui", JSON.stringify({ view: S.view, sort: S.sort, demoDismissed: S.demoDismissed })); } catch (e) {} }
@@ -571,6 +579,8 @@ function typeColor(doc) { return ent("types", doc.type)?.color || "#4E5A66"; }
 function domainPath(id) { const d = ent("domains", id); if (!d) return ""; const p = d.parent ? ent("domains", d.parent) : null; return p ? p.name + " › " + d.name : d.name; }
 function domainAndChildren(id) { return [id, ...S.tax.domains.filter(x => x.parent === id).map(x => x.id)]; }
 const allDocs = () => S.demo ? DEMO_DOCS : S.docs;
+const liveDocs = () => allDocs().filter(d => !d.trashed);
+const TRASH_DAYS = 30;
 
 function indexDoc(doc) {
   doc._n = {
@@ -749,7 +759,7 @@ function invalidateCorpus() { _df = null; allDocs().forEach(d => d._vec = null);
 function cos(a, b) { let s = 0; const [x, y] = a.size < b.size ? [a, b] : [b, a]; for (const [t, w] of x) { const u = y.get(t); if (u) s += w * u; } return s; }
 function similar(doc, n = 6) {
   const { df, N } = corpus(); const v = docVec(doc, df, N);
-  return allDocs().filter(d => d.id !== doc.id).map(d => [d, cos(v, docVec(d, df, N))]).filter(x => x[1] > .06).sort((a, b) => b[1] - a[1]).slice(0, n);
+  return liveDocs().filter(d => d.id !== doc.id).map(d => [d, cos(v, docVec(d, df, N))]).filter(x => x[1] > .06).sort((a, b) => b[1] - a[1]).slice(0, n);
 }
 // كلمات المطابقة: تُفصل بفاصلة لعبارات متعددة الكلمات، وإلا فبالمسافات
 const terms = m => (/[,،]/.test(m) ? m.split(/[,،]/) : m.split(/\s+/)).map(w => w.trim()).filter(Boolean);
@@ -852,6 +862,8 @@ function fieldOK(doc, f) {
 }
 function selOK(doc) {
   const s = S.sel;
+  if (s.kind === "trash") return !!doc.trashed;
+  if (doc.trashed) return false;
   switch (s.kind) {
     case "inbox": return doc.inbox;
     case "starred": return doc.starred;
@@ -902,12 +914,13 @@ function snippet(doc, terms) {
 }
 
 /* ============================== الواجهة: الشريط الجانبي ============================== */
-function count(pred) { let c = 0; for (const d of allDocs()) if (pred(d)) c++; return c; }
+function count(pred) { let c = 0; for (const d of allDocs()) if (!d.trashed && pred(d)) c++; return c; }
 function navBtn(kind, id, label, cnt, extra = "") {
   const on = S.sel.kind === kind && (S.sel.id || null) === (id || null);
   return `<li><button class="${on ? "on" : ""}" data-sel="${kind}" data-id="${esc(id || "")}">${extra}<span class="lbl">${esc(label)}</span>${cnt !== null ? `<span class="cnt">${cnt}</span>` : ""}</button></li>`;
 }
 const ICONS = {
+  trash: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>',
   all: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18v13H3z"/><path d="M5 4h14v3"/></svg>',
   inbox: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>',
   recent: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
@@ -918,11 +931,12 @@ function renderSide() {
   const T = S.tax; const docs = allDocs();
   const inboxN = count(d => d.inbox);
   let h = `<ul class="nav">
-    ${navBtn("all", null, "كل الوثائق", docs.length, ICONS.all)}
+    ${navBtn("all", null, "كل الوثائق", count(() => true), ICONS.all)}
     ${navBtn("inbox", null, "صندوق الوارد", null, ICONS.inbox).replace("</button>", (inboxN ? `<span class="pill-warn">${inboxN}</span>` : `<span class="cnt">0</span>`) + "</button>")}
     ${navBtn("recent", null, "أضيفت حديثاً", count(d => Date.now() - new Date(d.added).getTime() < 14 * 864e5), ICONS.recent)}
     ${navBtn("starred", null, "المفضلة", count(d => d.starred), ICONS.star)}
     ${navBtn("untagged", null, "بحاجة إلى تصنيف", count(d => !d.domain || !d.type), ICONS.todo)}
+    ${navBtn("trash", null, "سلة المحذوفات", docs.filter(d => d.trashed).length, ICONS.trash)}
   </ul>`;
   if (T.views.length) h += `<h3>عروض محفوظة</h3><ul class="nav">${T.views.map(v => `<li><button data-view="${v.id}"><span class="lbl">${esc(v.name)}</span><span class="cnt" data-delview="${v.id}" title="حذف" role="button">×</span></button></li>`).join("")}</ul>`;
   h += `<h3>المجالات <button data-manage="domains">إدارة</button></h3><ul class="nav">`;
@@ -938,7 +952,7 @@ function renderSide() {
   h += T.corrs.map(c => navBtn("corr", c.id, c.name, count(d => d.corr === c.id))).join("");
   h += `</ul><h3>الوسوم <button data-manage="tags">إدارة</button></h3><div class="tagcloud">`;
   h += T.tags.map(t => `<button class="${S.sel.kind === "tag" && S.sel.id === t.id ? "on" : ""}" data-sel="tag" data-id="${t.id}">${esc(t.name)} <span class="mono">${count(d => (d.tags || []).includes(t.id))}</span></button>`).join("");
-  const years = [...new Set(docs.map(d => (d.docDate || "").slice(0, 4)).filter(Boolean))].sort().reverse();
+  const years = [...new Set(docs.filter(d => !d.trashed).map(d => (d.docDate || "").slice(0, 4)).filter(Boolean))].sort().reverse();
   h += `</div>`;
   if (years.length) h += `<h3>السنوات</h3><div class="years">${years.map(y => `<button class="mono ${S.sel.kind === "year" && S.sel.id === y ? "on" : ""}" data-sel="year" data-id="${y}">${y}</button>`).join("")}</div>`;
   const where = S.store?.kind === "folder" ? `<b>التخزين: مجلد «${esc(S.store.name)}».</b> الملفات الأصلية وبطاقات الفهرسة محفوظة فيه، وإن كان في iCloud Drive فهي تتزامن بين أجهزتك.${S.store.pending ? `<br><span style="color:var(--warn)">${S.store.pending} بطاقة لم تُنزَّل بعد من iCloud.</span>` : ""} <button class="btn small ghost" style="height:24px;padding:0 6px" data-act="sync">مزامنة الآن</button>` : S.store?.kind === "cloud" ? `<b>التخزين: حسابك على Claude.</b> البيانات الوصفية والنصوص محفوظة في مساحتك الخاصة، والملفات في مخزن هذه الصفحة.` : `<b>التخزين: هذا المتصفح.</b> الوثائق محفوظة محلياً على جهازك (IndexedDB) ولا تُرفع إلى أي خادم. خذ نسخة احتياطية دورياً من الإعدادات.`;
@@ -950,7 +964,7 @@ function renderSide() {
 const PAGE = 60;
 function selTitle() {
   const s = S.sel;
-  return { all: "كل الوثائق", inbox: "صندوق الوارد", recent: "أضيفت حديثاً", starred: "المفضلة", untagged: "بحاجة إلى تصنيف", domain: domainPath(s.id), type: entName("types", s.id), corr: entName("corrs", s.id), tag: "وسم: " + entName("tags", s.id), year: "سنة " + s.id }[s.kind] || "";
+  return { trash: "سلة المحذوفات", all: "كل الوثائق", inbox: "صندوق الوارد", recent: "أضيفت حديثاً", starred: "المفضلة", untagged: "بحاجة إلى تصنيف", domain: domainPath(s.id), type: entName("types", s.id), corr: entName("corrs", s.id), tag: "وسم: " + entName("tags", s.id), year: "سنة " + s.id }[s.kind] || "";
 }
 function renderMain() {
   const { rows, ms, pq } = runSearch(); const terms = pq.terms;
@@ -960,26 +974,37 @@ function renderMain() {
   h += `<div class="toolbar"><h2>${esc(selTitle())}</h2><span class="stat num">${rows.length} وثيقة${S.q ? ` · ${ms < 1 ? "<1" : Math.round(ms)} مللي ثانية` : ""}</span><span class="grow"></span>
     <label class="sr" for="sortSel">الترتيب</label>
     <select class="sel" id="sortSel">${[["added-desc", "الأحدث إضافة"], ["date-desc", "تاريخ الوثيقة ↓"], ["date-asc", "تاريخ الوثيقة ↑"], ["title", "العنوان"], ["asn", "الرقم الأرشيفي"], ["relevance", "الأكثر صلة"]].map(([v, l]) => `<option value="${v}" ${S.sort === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <button class="btn small ${S.selMode ? "primary" : ""}" data-act="select-mode" style="height:32px">${S.selMode ? "إنهاء التحديد" : "تحديد"}</button>
     <div class="seg" role="group" aria-label="طريقة العرض">
       <button data-viewmode="grid" class="${S.view === "grid" ? "on" : ""}" title="بطاقات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>بطاقات</button>
       <button data-viewmode="list" class="${S.view === "list" ? "on" : ""}" title="قائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>قائمة</button>
       <button data-viewmode="timeline" class="${S.view === "timeline" ? "on" : ""}" title="خط زمني"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><circle cx="12" cy="7" r="2"/><circle cx="12" cy="16" r="2"/><path d="M14 7h6M4 16h6"/></svg>زمني</button>
     </div></div>`;
+  if (S.sel.kind === "trash") h += `<p class="trash-note">تُحذف الوثائق نهائياً من السلة بعد ${TRASH_DAYS} يوماً من نقلها إليها. افتح وثيقة لاستعادتها، أو استعمل «تحديد».${rows.length ? ` <button class="btn small ghost danger" data-act="empty-trash">إفراغ السلة</button>` : ""}</p>`;
+  if (S.confirmBulk) h += `<div class="confirm" style="margin-bottom:12px">${esc(S.confirmBulk.label)} <button class="btn small danger" data-act="bulk-yes">نعم، احذف نهائياً</button><button class="btn small ghost" data-act="bulk-no">إلغاء</button></div>`;
+  if (S.selMode) {
+    const n = S.picked.size, inTrash = S.sel.kind === "trash";
+    h += `<div class="selbar"><span class="num">${n ? `حُدّدت ${n} وثيقة` : "انقر على الوثائق لتحديدها"}</span>
+      <button class="btn small ghost" data-act="pick-all">تحديد كل النتائج (${rows.length})</button>${n ? `<button class="btn small ghost" data-act="pick-none">إلغاء التحديد</button>` : ""}<b></b>
+      ${inTrash ? `<button class="btn small" data-act="bulk-restore" ${n ? "" : "disabled"}>استعادة</button><button class="btn small danger" data-act="bulk-forever" ${n ? "" : "disabled"}>حذف نهائي</button>`
+        : `<button class="btn small danger" data-act="bulk-trash" ${n ? "" : "disabled"}>نقل إلى السلة</button>`}</div>`;
+  }
+  S._rows = rows;
   const chips = [];
   if (S.sel.kind !== "all") chips.push(`<span class="chip">${esc(selTitle())}<button data-act="clear-sel" aria-label="إزالة">×</button></span>`);
   if (S.q) chips.push(`<span class="chip">بحث: «${esc(S.q)}»<button data-act="clear-q" aria-label="مسح البحث">×</button></span><button class="btn small ghost" data-act="save-view">حفظ كعرض</button>`);
   if (chips.length) h += `<div class="chips">${chips.join("")}</div>`;
   if (!rows.length) {
-    h += allDocs().length ? `<div class="empty"><h3>لا توجد نتائج</h3><p>جرّب كلمة أقصر أو احذف أحد المرشحات. البحث يتجاهل الهمزات والتشكيل، فـ«أطروحة» و«اطروحه» سواء.</p></div>`
+    h += S.sel.kind === "trash" ? `<div class="empty"><h3>السلة فارغة</h3><p>الوثائق التي تحذفها تبقى هنا ${TRASH_DAYS} يوماً قبل حذفها نهائياً.</p></div>` : liveDocs().length ? `<div class="empty"><h3>لا توجد نتائج</h3><p>جرّب كلمة أقصر أو احذف أحد المرشحات. البحث يتجاهل الهمزات والتشكيل، فـ«أطروحة» و«اطروحه» سواء.</p></div>`
       : `<div class="empty"><h3>الأرشيف فارغ</h3><p>اسحب ملفات PDF أو صوراً ممسوحة ضوئياً أو ملفات Word إلى هذه النافذة، أو استعمل زر «إضافة وثائق».<br>سيُستخرج النص تلقائياً ويُصنّف كل ملف حسب قواعدك.</p><button class="btn primary" data-act="add">إضافة وثائق</button> <button class="btn" data-act="show-demo">عرض أمثلة</button></div>`;
   } else if (S.view === "list") {
     h += `<div class="tablewrap"><table class="list"><thead><tr><th></th><th>الرقم</th><th>العنوان</th><th>النوع</th><th>الجهة</th><th>التاريخ</th><th>المجال</th><th>الوسوم</th><th>صفحات</th></tr></thead><tbody>`;
-    h += shown.map(d => `<tr data-open="${d.id}"><td>${d.thumb ? `<img class="mini" src="${d.thumb}" alt="">` : `<span class="mini"></span>`}</td><td class="mono">${asnStr(d.asn)}</td><td><div class="t">${esc(d.title)}</div>${terms.length ? `<div class="snip" style="-webkit-line-clamp:1">${snippet(d, terms)}</div>` : ""}</td><td><span class="tag" style="background:${esc(typeColor(d))};color:#fff">${esc(entName("types", d.type) || "—")}</span></td><td>${esc(entName("corrs", d.corr) || "—")}</td><td class="mono" style="white-space:nowrap">${esc(d.docDate || "—")}</td><td>${esc(domainPath(d.domain) || "—")}</td><td>${(d.tags || []).map(t => `<span class="tag">${esc(entName("tags", t))}</span>`).join(" ")}</td><td class="mono">${d.pages || "—"}</td></tr>`).join("");
+    h += shown.map(d => `<tr data-open="${d.id}" class="${S.picked.has(d.id) ? "picked" : ""}"><td>${d.thumb ? `<img class="mini" src="${d.thumb}" alt="">` : `<span class="mini"></span>`}</td><td class="mono">${asnStr(d.asn)}</td><td><div class="t">${esc(d.title)}</div>${terms.length ? `<div class="snip" style="-webkit-line-clamp:1">${snippet(d, terms)}</div>` : ""}</td><td><span class="tag" style="background:${esc(typeColor(d))};color:#fff">${esc(entName("types", d.type) || "—")}</span></td><td>${esc(entName("corrs", d.corr) || "—")}</td><td class="mono" style="white-space:nowrap">${esc(d.docDate || "—")}</td><td>${esc(domainPath(d.domain) || "—")}</td><td>${(d.tags || []).map(t => `<span class="tag">${esc(entName("tags", t))}</span>`).join(" ")}</td><td class="mono">${d.pages || "—"}</td></tr>`).join("");
     h += `</tbody></table></div>`;
   } else if (S.view === "timeline") {
     const groups = {};
     for (const d of shown) { const y = (d.docDate || "").slice(0, 4) || "بدون تاريخ"; const m = (d.docDate || "").slice(5, 7) || "00"; ((groups[y] ||= {})[m] ||= []).push(d); }
-    h += `<div class="timeline">` + Object.keys(groups).sort().reverse().map(y => `<section class="tl-year"><h4 class="mono">${esc(y)}</h4><div class="tl-months">${Object.keys(groups[y]).sort().reverse().map(m => `<div class="tl-month"><h5>${m === "00" ? "—" : AR_MONTHS[+m - 1]}</h5><div class="tl-items">${groups[y][m].map(d => `<button class="tl-item" data-open="${d.id}">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span><span class="tt">${esc(d.title)}</span><span class="ts">${esc(entName("types", d.type) || "")}${d.corr ? " · " + esc(entName("corrs", d.corr)) : ""}</span></span></button>`).join("")}</div></div>`).join("")}</div></section>`).join("") + `</div>`;
+    h += `<div class="timeline">` + Object.keys(groups).sort().reverse().map(y => `<section class="tl-year"><h4 class="mono">${esc(y)}</h4><div class="tl-months">${Object.keys(groups[y]).sort().reverse().map(m => `<div class="tl-month"><h5>${m === "00" ? "—" : AR_MONTHS[+m - 1]}</h5><div class="tl-items">${groups[y][m].map(d => `<button class="tl-item ${S.picked.has(d.id) ? "picked" : ""}" data-open="${d.id}">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span><span class="tt">${esc(d.title)}</span><span class="ts">${esc(entName("types", d.type) || "")}${d.corr ? " · " + esc(entName("corrs", d.corr)) : ""}</span></span></button>`).join("")}</div></div>`).join("")}</div></section>`).join("") + `</div>`;
   } else {
     h += `<div class="grid">` + shown.map(d => card(d, terms)).join("") + `</div>`;
   }
@@ -988,7 +1013,7 @@ function renderMain() {
 }
 function card(d, terms) {
   const sn = terms.length ? snippet(d, terms) : "";
-  return `<button class="card" data-open="${d.id}">
+  return `<button class="card ${S.selMode ? "picking" : ""} ${S.picked.has(d.id) ? "picked" : ""}" data-open="${d.id}" ${S.selMode ? `aria-pressed="${S.picked.has(d.id)}"` : ""}>
     <div class="thumb">${d.thumb ? `<img src="${d.thumb}" alt="" loading="lazy">` : ""}
       ${d.type ? `<span class="typeband" style="background:${esc(typeColor(d))}">${esc(entName("types", d.type))}</span>` : ""}
       <span class="flags">${d.inbox ? `<span class="flag inbox">جديد</span>` : ""}${d.starred ? `<span class="flag star">★</span>` : ""}${/^ocr/.test(d.textSource || "") ? `<span class="flag" title="نص مستخرج بالتعرف الضوئي">OCR</span>` : ""}</span>
@@ -1019,9 +1044,10 @@ function renderDrawer() {
       <h2 title="${esc(d.title)}">${esc(d.title)}</h2>
       <button class="btn small ghost" data-act="star">${d.starred ? "★ في المفضلة" : "☆ أضف للمفضلة"}</button>
       ${d.file ? `<button class="btn small" data-act="open-file">فتح الأصل</button><button class="btn small ghost" data-act="download">تنزيل</button>` : ""}
-      <button class="btn small ghost danger" data-act="delete">حذف</button>
+      ${d.trashed ? `<button class="btn small" data-act="restore">استعادة من السلة</button><button class="btn small ghost danger" data-act="delete">حذف نهائي</button>` : `<button class="btn small ghost danger" data-act="trash">حذف</button>`}
     </div>
-    ${S.confirmDelete === d.id ? `<div class="confirm" style="margin:8px 16px">حذف هذه الوثيقة وملفها نهائياً؟ <button class="btn small danger" data-act="delete-yes">نعم، احذف</button><button class="btn small ghost" data-act="delete-no">إلغاء</button></div>` : ""}
+    ${S.confirmDelete === d.id ? `<div class="confirm" style="margin:8px 16px">حذف هذه الوثيقة وملفها الأصلي نهائياً؟ لا يمكن التراجع. <button class="btn small danger" data-act="delete-yes">نعم، احذف</button><button class="btn small ghost" data-act="delete-no">إلغاء</button></div>` : ""}
+    ${d.trashed ? `<div class="confirm" style="margin:8px 16px">هذه الوثيقة في سلة المحذوفات منذ ${esc(fmtDate(d.trashed.slice(0, 10)))}، وتُحذف نهائياً بعد ${TRASH_DAYS} يوماً.</div>` : ""}
     <div class="dr-body"><div class="preview" id="preview"><p class="note">جارٍ تحضير المعاينة…</p></div>
     <div class="meta"><div class="tabs" role="tablist">
       ${[["info", "الفهرسة"], ["text", "النص المستخرج"], ["similar", "وثائق مشابهة"]].map(([k, l]) => `<button role="tab" class="${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("")}
@@ -1096,6 +1122,32 @@ async function renderPreview(d) {
 function openDoc(id) { if (S.open !== id) { S.tab = "info"; S.confirmDelete = null; } S.open = id; renderDrawer(); }
 function closeDrawer() { setTimeout(() => { if (S.updatePending && !busy()) applyUpdate(); }, 600); S.open = null; previewToken++; S._previewFor = null; S._previewNode = null; $("#drawerLayer")?.remove(); }
 
+/* ============================== الحذف وسلة المحذوفات ============================== */
+async function moveToTrash(docs) {
+  const now = new Date().toISOString();
+  for (const d of docs) { if (d.demo) { DEMO_DOCS = DEMO_DOCS.filter(x => x.id !== d.id); continue; } d.trashed = now; await persistDoc(d); }
+  invalidateCorpus();
+}
+async function restoreDocs(docs) { for (const d of docs) { d.trashed = null; await persistDoc(d); } invalidateCorpus(); } // null وليس حذف الحقل، حتى تنتقل الاستعادة عند المزامنة
+async function deleteForever(docs) {
+  const now = new Date().toISOString(); const ids = new Set(docs.map(d => d.id));
+  for (const d of docs) {
+    if (d.demo) continue;
+    try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (er) { console.warn(er); }
+    (S.tax.deleted ||= {})[d.id] = now; // ينتقل الحذف إلى الأجهزة الأخرى عند المزامنة
+  }
+  if (S.demo) DEMO_DOCS = DEMO_DOCS.filter(d => !ids.has(d.id)); else S.docs = S.docs.filter(d => !ids.has(d.id));
+  // سجل المحذوفات: يُكتفى بآخر سنة
+  const cutoff = new Date(Date.now() - 365 * 864e5).toISOString(); for (const [id, t] of Object.entries(S.tax.deleted || {})) if (t < cutoff) delete S.tax.deleted[id];
+  await persistTax(); invalidateCorpus();
+}
+async function purgeTrash() {
+  const cutoff = new Date(Date.now() - TRASH_DAYS * 864e5).toISOString();
+  const old = S.docs.filter(d => d.trashed && d.trashed < cutoff); if (old.length) await deleteForever(old);
+}
+const pickedDocs = () => allDocs().filter(d => S.picked.has(d.id));
+function endSelect() { S.selMode = false; S.picked.clear(); S.confirmBulk = null; }
+
 /* ============================== الحفظ ============================== */
 async function persistDoc(d) {
   indexDoc(d); invalidateCorpus();
@@ -1124,7 +1176,7 @@ async function importFiles(files) {
       it.state = "run"; const f = it.file; const mime = guessMime(f); const ext = f.name.split(".").pop().toLowerCase();
       report("قراءة الملف…", .02); const buf = await f.arrayBuffer(); const hash = await sha256(buf.slice(0));
       const dup = S.docs.find(d => d.hash === hash);
-      if (dup) { it.state = "err"; report(`مكرر: موجود مسبقاً برقم ${asnStr(dup.asn)}`, 1); it.dupOf = dup.id; continue; }
+      if (dup) { it.state = "err"; report(dup.trashed ? `مكرر: موجود في سلة المحذوفات برقم ${asnStr(dup.asn)} (افتحه لاستعادته)` : `مكرر: موجود مسبقاً برقم ${asnStr(dup.asn)}`, 1); it.dupOf = dup.id; continue; }
       let r;
       if (mime === "application/pdf") r = await extractPDF(buf.slice(0), report);
       else if (/^image\//.test(mime)) {
@@ -1362,9 +1414,12 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = S.open ? allDocs().find(x => x.id === S.open) : null;
   if (t.dataset.delview) { e.stopPropagation(); S.tax.views = S.tax.views.filter(v => v.id !== t.dataset.delview); await persistTax(); renderSide(); return; }
-  if (t.dataset.sel) { S.sel = { kind: t.dataset.sel, id: t.dataset.id || undefined }; if (S.sel.kind === "all") S.sel = { kind: "all" }; S.page = 1; $("#side").classList.remove("open"); renderSide(); renderMain(); return; }
+  if (t.dataset.sel) { S.picked.clear(); S.confirmBulk = null; S.sel = { kind: t.dataset.sel, id: t.dataset.id || undefined }; if (S.sel.kind === "all") S.sel = { kind: "all" }; S.page = 1; $("#side").classList.remove("open"); renderSide(); renderMain(); return; }
   if (t.dataset.view) { const v = S.tax.views.find(x => x.id === t.dataset.view); if (v) { S.q = v.q; $("#q").value = v.q; S.sel = v.sel || { kind: "all" }; S.page = 1; render(); } return; }
-  if (t.dataset.open) { openDoc(t.dataset.open); return; }
+  if (t.dataset.open) {
+    if (S.selMode && t.closest("#main")) { const id = t.dataset.open; S.picked.has(id) ? S.picked.delete(id) : S.picked.add(id); S.confirmBulk = null; renderMain(); return; }
+    openDoc(t.dataset.open); return;
+  }
   if (t.dataset.viewmode) { S.view = t.dataset.viewmode; saveUI(); renderMain(); return; }
   if (t.dataset.tab) { S.tab = t.dataset.tab; renderDrawer(); return; }
   if (t.dataset.manage) { openSettings(t.dataset.manage); return; }
@@ -1384,12 +1439,23 @@ document.addEventListener("click", async e => {
     case "clear-queue": S.queue = []; renderQueue(); break;
     case "star": if (d) { d.starred = !d.starred; await persistDoc(d); render(); } break;
     case "reviewed": if (d) { d.inbox = false; await persistDoc(d); render(); toast("نُقلت الوثيقة من صندوق الوارد"); } break;
+    case "trash": if (d) { await moveToTrash([d]); closeDrawer(); render(); toast("نُقلت الوثيقة إلى سلة المحذوفات"); } break;
+    case "restore": if (d) { await restoreDocs([d]); render(); toast("استُعيدت الوثيقة"); } break;
+    case "select-mode": if (S.selMode) endSelect(); else { S.selMode = true; S.picked.clear(); } renderMain(); break;
+    case "pick-all": (S._rows || []).forEach(x => S.picked.add(x.id)); renderMain(); break;
+    case "pick-none": S.picked.clear(); S.confirmBulk = null; renderMain(); break;
+    case "bulk-trash": { const ds = pickedDocs(); await moveToTrash(ds); endSelect(); render(); toast(`نُقلت ${ds.length} وثيقة إلى سلة المحذوفات`); break; }
+    case "bulk-restore": { const ds = pickedDocs(); await restoreDocs(ds); endSelect(); render(); toast(`استُعيدت ${ds.length} وثيقة`); break; }
+    case "bulk-forever": { const n = S.picked.size; S.confirmBulk = { ids: [...S.picked], label: `حذف ${n} وثيقة وملفاتها الأصلية نهائياً؟ لا يمكن التراجع.` }; renderMain(); break; }
+    case "empty-trash": { const ids = allDocs().filter(x => x.trashed).map(x => x.id); S.confirmBulk = { ids, label: `إفراغ السلة: حذف ${ids.length} وثيقة وملفاتها الأصلية نهائياً؟ لا يمكن التراجع.` }; renderMain(); break; }
+    case "bulk-no": S.confirmBulk = null; renderMain(); break;
+    case "bulk-yes": { const ids = new Set(S.confirmBulk?.ids || []); const ds = allDocs().filter(x => ids.has(x.id)); await deleteForever(ds); endSelect(); render(); toast(`حُذفت ${ds.length} وثيقة نهائياً`); break; }
     case "delete": if (d) { S.confirmDelete = d.id; renderDrawer(); } break;
     case "delete-no": S.confirmDelete = null; renderDrawer(); break;
     case "delete-yes": if (d) {
       if (d.demo) { DEMO_DOCS = DEMO_DOCS.filter(x => x.id !== d.id); }
-      else { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (er) { console.warn(er); } S.docs = S.docs.filter(x => x.id !== d.id); (S.tax.deleted ||= {})[d.id] = new Date().toISOString(); await persistTax(); }
-      invalidateCorpus(); closeDrawer(); render(); toast("حُذفت الوثيقة"); } break;
+      else await deleteForever([d]);
+      closeDrawer(); render(); toast("حُذفت الوثيقة نهائياً"); } break;
     case "open-file": if (d?.file) { try { const b = await S.store.getFile(d.file); if (b) { const u = URL.createObjectURL(b); const w = window.open(u, "_blank"); if (!w) await saveFile(d.filename, b); setTimeout(() => URL.revokeObjectURL(u), 120000); } } catch (er) { toast(er.message || "تعذر فتح الملف"); } } break;
     case "sync": await syncFromFolder(); toast("اكتملت المزامنة"); break;
     case "pick-folder": await chooseFolder(false); break;
@@ -1439,6 +1505,8 @@ document.addEventListener("keydown", async e => {
     if (!d.tags.includes(tg.id)) d.tags.push(tg.id); await persistDoc(d); render(); setTimeout(() => $("#f-tagin")?.focus(), 0); return;
   }
   if ((e.key === "Enter" || e.key === " ") && e.target.matches?.('[role="button"][data-act]')) { e.preventDefault(); e.target.click(); return; }
+  if ((e.key === "Delete" || e.key === "Backspace") && S.selMode && S.picked.size && S.sel.kind !== "trash" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) { e.preventDefault(); $('[data-act="bulk-trash"]')?.click(); return; }
+  if (e.key === "Escape" && S.selMode && !$("#modalLayer") && !S.open) { endSelect(); renderMain(); return; }
   if (e.key === "Escape") { if ($("#modalLayer")) closeModal(); else if (S.open) closeDrawer(); else if ($("#side").classList.contains("open")) $("#side").classList.remove("open"); }
   if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) { e.preventDefault(); $("#q").focus(); }
 });
@@ -1464,6 +1532,7 @@ async function loadInto(store, data) {
   S.docs = (data.docs || []).filter(d => d && d.id); S.docs.forEach(indexDoc);
   const maxAsn = S.docs.reduce((m, d) => Math.max(m, d.asn || 0), 0); if (S.tax.nextAsn <= maxAsn) S.tax.nextAsn = maxAsn + 1;
   S.demo = false; DEMO_DOCS = [];
+  try { await purgeTrash(); } catch (e) { console.warn("purge", e); }
   if (!S.docs.length && !S.demoDismissed) { try { await Promise.race([document.fonts.ready, sleep(1500)]); } catch (e) {} buildDemo(); S.demo = true; }
   invalidateCorpus(); closeModal(); render(); readyResolve();
 }
