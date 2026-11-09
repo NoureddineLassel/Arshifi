@@ -1,0 +1,1462 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>أرشيفي</title>
+<meta name="description" content="نظام شخصي لإدارة الوثائق والأرشيف المهني والأكاديمي">
+<meta name="theme-color" content="#0C6A6D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" href="icons/arshifi-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/arshifi-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="أرشيفي">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: archive-room shell — a sticky search bar, a fixed index of shelves (sidebar) and a wall of document cards; a drawer slides in to read and file a document. */
+:root{
+  --bg:#ECEFF2; --surface:#FFFFFF; --surface-2:#F5F7F9; --sunk:#E3E8EC;
+  --ink:#14202A; --muted:#5A6874; --faint:#8794A0; --line:#D3DBE1;
+  --accent:#0C6A6D; --accent-2:#E2F0EF; --accent-ink:#FFFFFF;
+  --warn:#B4531A; --warn-bg:#FBEBDD; --ok:#2E7D4F; --danger:#B3261E;
+  --shadow:0 1px 2px rgba(20,32,42,.06),0 6px 18px rgba(20,32,42,.07);
+  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
+  --f-body:"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px; --side:264px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E151B; --surface:#152029; --surface-2:#1A2731; --sunk:#0B1116;
+  --ink:#E3E9ED; --muted:#98A6B1; --faint:#6D7C88; --line:#283743;
+  --accent:#4DB0AC; --accent-2:#173335; --accent-ink:#06201F;
+  --warn:#F0A066; --warn-bg:#3A2616; --ok:#6CC08F; --danger:#F08A80;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.28); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E151B; --surface:#152029; --surface-2:#1A2731; --sunk:#0B1116;
+  --ink:#E3E9ED; --muted:#98A6B1; --faint:#6D7C88; --line:#283743;
+  --accent:#4DB0AC; --accent-2:#173335; --accent-ink:#06201F;
+  --warn:#F0A066; --warn-bg:#3A2616; --ok:#6CC08F; --danger:#F08A80;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px rgba(0,0,0,.28); color-scheme:dark}
+*{box-sizing:border-box}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.6;direction:rtl}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.num{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:34px;height:34px;border-radius:8px;background:var(--accent);display:grid;place-items:center;flex:none}
+.brand-mark svg{width:20px;height:20px}
+.brand h1{font-family:var(--f-display);font-weight:600;font-size:22px;margin:0;line-height:1;letter-spacing:0}
+.brand small{display:block;color:var(--muted);font-size:11px;margin-top:3px;white-space:nowrap}
+.search{flex:1 1 380px;min-width:0;position:relative;display:flex;align-items:center}
+.search input{width:100%;height:42px;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:0 44px 0 44px;font-size:15px}
+.search input:focus{background:var(--surface);border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-2)}
+.search .ico{position:absolute;right:15px;color:var(--faint);pointer-events:none;display:flex}
+.search .help-btn{position:absolute;left:6px;width:30px;height:30px;border-radius:50%;border:0;background:transparent;color:var(--faint);font-weight:700;display:grid;place-items:center}
+.search .help-btn:hover{background:var(--sunk);color:var(--accent)}
+.kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;font-family:var(--f-mono);font-size:10px;color:var(--muted);background:var(--surface)}
+.top-actions{display:flex;gap:8px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--faint)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.small{height:30px;padding:0 10px;font-size:13px}
+.btn.danger{color:var(--danger)}
+.btn svg{width:16px;height:16px;flex:none}
+.icon-btn{width:36px;padding:0;justify-content:center}
+.menu-toggle{display:none}
+
+/* shell */
+.shell{display:grid;grid-template-columns:var(--side) minmax(0,1fr);min-height:calc(100% - 63px)}
+.side{border-left:1px solid var(--line);background:var(--surface-2);padding:14px 10px 40px;overflow-y:auto;position:sticky;top:63px;height:calc(100vh - 63px)}
+.side h3{font-family:var(--f-display);font-weight:500;font-size:13px;color:var(--muted);margin:16px 8px 6px;display:flex;justify-content:space-between;align-items:center}
+.side h3 button{border:0;background:none;color:var(--faint);font-size:11px;padding:0 4px}
+.side h3 button:hover{color:var(--accent)}
+.nav{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+.nav button{width:100%;display:flex;align-items:center;gap:8px;border:0;background:none;padding:6px 8px;border-radius:7px;text-align:right;color:var(--ink);font-size:13.5px}
+.nav button:hover{background:var(--sunk)}
+.nav button.on{background:var(--accent-2);color:var(--accent);font-weight:600}
+.nav .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav .cnt{font-family:var(--f-mono);font-size:11px;color:var(--faint)}
+.nav .sub button{padding-right:26px;font-size:13px}
+.dot{width:9px;height:9px;border-radius:3px;flex:none}
+.pill-warn{background:var(--warn-bg);color:var(--warn);border-radius:999px;padding:0 7px;font-size:11px;font-weight:600}
+.tagcloud{display:flex;flex-wrap:wrap;gap:5px;padding:2px 6px}
+.tagcloud button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:1px 9px;font-size:12px;color:var(--muted)}
+.tagcloud button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.years{display:flex;flex-wrap:wrap;gap:4px;padding:2px 6px}
+.years button{border:0;background:var(--sunk);border-radius:6px;padding:2px 8px;font-size:12px}
+.years button.on{background:var(--accent);color:var(--accent-ink)}
+.storage-note{margin:22px 8px 0;padding:10px;border-radius:8px;background:var(--surface);border:1px dashed var(--line);font-size:12px;color:var(--muted)}
+.storage-note b{color:var(--ink);font-weight:600}
+
+/* main */
+.main{min-width:0;padding-block:16px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:20px}
+.banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--accent-2);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);color:var(--ink);padding:10px 14px;border-radius:var(--r);margin-bottom:14px;font-size:13px}
+.banner p{margin:0;flex:1 1 280px}
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.toolbar h2{font-family:var(--f-display);font-weight:600;font-size:20px;margin:0;text-wrap:balance}
+.toolbar .stat{color:var(--muted);font-size:12.5px}
+.toolbar .grow{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:5px 10px;display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted)}
+.seg button+button{border-right:1px solid var(--line)}
+.seg button.on{background:var(--accent-2);color:var(--accent);font-weight:600}
+.seg svg{width:15px;height:15px}
+select.sel{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 8px;font-size:12.5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 6px 2px 10px;background:var(--surface);border:1px solid var(--line);font-size:12px}
+.chip button{border:0;background:var(--sunk);width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:12px;line-height:1;padding:0;color:var(--muted)}
+
+/* cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;text-align:right;padding:0;position:relative}
+.card:hover{box-shadow:var(--shadow);border-color:color-mix(in srgb,var(--accent) 35%,var(--line));transform:translateY(-2px)}
+.thumb{aspect-ratio:3/3.4;max-width:100%;background:var(--sunk);position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.thumb .typeband{position:absolute;top:8px;right:8px;font-size:11px;font-weight:600;padding:1px 8px;border-radius:5px;color:#fff;max-width:75%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb .asn{position:absolute;bottom:7px;left:7px;background:var(--surface);color:var(--muted);border-radius:5px;padding:0 6px;font-size:10.5px;border:1px solid var(--line)}
+.thumb .flags{position:absolute;top:7px;left:7px;display:flex;gap:4px}
+.flag{background:var(--surface);border-radius:5px;padding:0 6px;font-size:10.5px;border:1px solid var(--line);color:var(--muted)}
+.flag.inbox{background:var(--warn-bg);color:var(--warn);border-color:transparent;font-weight:600}
+.flag.star{color:#C08A12}
+.card .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.card .title{font-weight:600;font-size:13.5px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card .sub{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.card .sub .sep{color:var(--faint)}
+.card .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;padding-top:4px}
+.tag{font-size:11px;padding:0 7px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.snip{font-size:12px;color:var(--muted);line-height:1.55;background:var(--surface-2);border-radius:6px;padding:5px 7px;margin-top:2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+mark{background:color-mix(in srgb,#F2C94C 55%,transparent);color:inherit;border-radius:2px;padding:0 1px}
+
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table.list{width:100%;border-collapse:collapse;font-size:13px;min-width:760px}
+table.list th{text-align:right;font-weight:600;color:var(--muted);font-size:12px;padding:9px 10px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+table.list td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.list tr{cursor:pointer}
+table.list tbody tr:hover{background:var(--surface-2)}
+table.list .mini{width:34px;height:42px;border-radius:4px;object-fit:cover;object-position:top;border:1px solid var(--line);background:var(--sunk);display:block}
+table.list .t{font-weight:600}
+
+.timeline{display:flex;flex-direction:column;gap:22px}
+.tl-year{display:grid;grid-template-columns:76px minmax(0,1fr);gap:14px}
+.tl-year>h4{font-family:var(--f-display);font-size:24px;font-weight:600;margin:0;color:var(--accent);position:sticky;top:76px;align-self:start}
+.tl-months{border-right:2px solid var(--line);padding-right:16px;display:flex;flex-direction:column;gap:14px}
+.tl-month h5{margin:0 0 6px;font-size:13px;color:var(--muted);font-weight:600;position:relative}
+.tl-month h5::before{content:"";position:absolute;right:-22px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--surface);border:2px solid var(--accent)}
+.tl-items{display:flex;flex-wrap:wrap;gap:10px}
+.tl-item{display:flex;gap:8px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 6px 6px 12px;cursor:pointer;max-width:330px;text-align:right}
+.tl-item:hover{border-color:var(--accent)}
+.tl-item img{width:34px;height:42px;object-fit:cover;object-position:top;border-radius:4px;border:1px solid var(--line);flex:none}
+.tl-item .tt{font-size:12.5px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tl-item .ts{font-size:11px;color:var(--muted)}
+
+.empty{border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;color:var(--muted);background:var(--surface)}
+.empty h3{font-family:var(--f-display);color:var(--ink);font-size:20px;margin:0 0 6px}
+.more{display:flex;justify-content:center;margin-top:18px}
+
+/* drop overlay */
+.drop{position:fixed;inset:0;z-index:90;background:color-mix(in srgb,var(--accent) 18%,transparent);backdrop-filter:blur(2px);display:grid;place-items:center;pointer-events:none}
+.drop div{background:var(--surface);border:2px dashed var(--accent);border-radius:16px;padding:30px 40px;font-family:var(--f-display);font-size:20px;color:var(--accent)}
+
+/* queue */
+.queue{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:calc(16px + env(safe-area-inset-left,0px));z-index:70;width:min(360px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.queue header{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--line);font-weight:600;font-size:13px}
+.queue ul{list-style:none;margin:0;padding:6px 0;max-height:240px;overflow-y:auto}
+.queue li{padding:6px 12px;font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+.queue .qn{display:flex;justify-content:space-between;gap:8px}
+.queue .qn span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.queue .qs{color:var(--muted);font-size:11.5px}
+.queue .qs.err{color:var(--danger)}
+.queue .qs.done{color:var(--ok)}
+.bar{height:3px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,18,24,.45);z-index:80}
+.drawer{position:fixed;z-index:81;top:0;bottom:0;left:0;width:min(1120px,100vw);background:var(--bg);box-shadow:var(--shadow);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px)}
+.dr-head{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.dr-head h2{margin:0;font-size:16px;font-weight:600;flex:1 1 200px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dr-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr)}
+.preview{overflow:auto;background:var(--sunk);padding:16px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.preview canvas,.preview img.page{max-width:100%;height:auto;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18);border-radius:2px}
+.preview .textdoc{background:var(--surface);color:var(--ink);max-width:720px;width:100%;padding:28px;border-radius:4px;white-space:pre-wrap;line-height:1.9;font-size:14px}
+.preview .note{color:var(--muted);font-size:12.5px;text-align:center}
+.meta{overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);padding:0 0 30px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);padding:0 12px;position:sticky;top:0;background:var(--surface);z-index:2}
+.tabs button{border:0;background:none;padding:10px 10px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.pane{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted);font-weight:500}
+.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:7px 10px;min-height:36px;width:100%}
+.field textarea{min-height:70px;resize:vertical}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tagbox{display:flex;flex-wrap:wrap;gap:5px;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:5px;min-height:36px}
+.tagbox .tg{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 4px 0 9px;font-size:12px}
+.tagbox .tg button{border:0;background:none;color:var(--faint);padding:0 3px}
+.tagbox input{border:0!important;background:transparent!important;min-height:26px!important;padding:0 4px!important;flex:1;min-width:90px}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:12.5px;background:var(--surface-2);border-radius:8px;padding:10px 12px}
+.facts dt{color:var(--muted)} .facts dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.suggest{border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));background:var(--accent-2);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:13px}
+.suggest h4{margin:0;font-size:13px;display:flex;align-items:center;gap:6px;color:var(--accent)}
+.suggest ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px}
+.suggest li{display:flex;gap:8px} .suggest li span:first-child{color:var(--muted);min-width:64px}
+.textview{white-space:pre-wrap;font-size:13px;line-height:1.85;background:var(--surface-2);border-radius:8px;padding:12px;max-height:none;overflow-wrap:anywhere}
+.simlist{display:flex;flex-direction:column;gap:8px}
+.sim{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;background:var(--surface);text-align:right}
+.sim:hover{border-color:var(--accent)}
+.sim img{width:38px;height:48px;object-fit:cover;object-position:top;border-radius:4px;border:1px solid var(--line);flex:none}
+.sim .score{font-family:var(--f-mono);font-size:11px;color:var(--accent);margin-right:auto}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--warn-bg);color:var(--warn);border-radius:8px;padding:8px 10px;font-size:12.5px}
+
+/* modal */
+.modal{position:fixed;z-index:85;inset:0;display:grid;place-items:center;padding:16px}
+.modal .box{background:var(--surface);border-radius:14px;box-shadow:var(--shadow);width:min(900px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;overflow:hidden}
+.modal .box>header{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.modal .box>header h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:18px;flex:1}
+.modal .content{overflow-y:auto;padding:16px}
+.ent-table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.ent-table th{text-align:right;color:var(--muted);font-weight:600;font-size:12px;padding:6px;border-bottom:1px solid var(--line)}
+.ent-table td{padding:5px 6px;border-bottom:1px solid var(--line)}
+.ent-table input,.ent-table select{width:100%;border:1px solid var(--line);border-radius:6px;background:var(--surface-2);padding:4px 7px;min-height:30px}
+.ent-table input[type=color]{width:34px;padding:1px;height:30px}
+.help{font-size:12.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:10px 12px;margin:0 0 12px;line-height:1.75}
+.help code{font-family:var(--f-mono);background:var(--sunk);padding:0 4px;border-radius:4px;font-size:11.5px;direction:ltr;unicode-bidi:isolate}
+.setting{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.setting p{margin:0;flex:1 1 300px} .setting p small{display:block;color:var(--muted)}
+
+.choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.choice article{border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.choice article.rec{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2)}
+.choice h3{margin:0;font-size:15px;display:flex;align-items:center;gap:8px}
+.choice p{margin:0;color:var(--muted);font-size:13px;line-height:1.75;flex:1}
+.choice .badge{font-size:11px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 8px;font-weight:600}
+.lock{max-width:560px;margin:60px auto;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:32px 24px}
+.lock h3{font-family:var(--f-display);font-size:20px;margin:0 0 8px}
+.lock p{color:var(--muted);margin:0 0 18px}
+.lock .actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.toast{position:fixed;z-index:95;bottom:calc(20px + env(safe-area-inset-bottom,0px));right:50%;transform:translateX(50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:9px;font-size:13px;box-shadow:var(--shadow);max-width:calc(100vw - 32px)}
+
+@media (max-width:980px){
+  .dr-body{grid-template-columns:1fr;grid-template-rows:minmax(260px,45vh) auto;overflow-y:auto}
+  .meta{border-right:0;border-top:1px solid var(--line);overflow:visible}
+  .preview{overflow:auto}
+}
+@media (max-width:860px){
+  .menu-toggle{display:inline-flex}
+  .shell{grid-template-columns:1fr}
+  .side{position:fixed;top:0;bottom:0;right:0;width:min(300px,86vw);z-index:75;height:auto;transform:translateX(105%);transition:transform .2s;box-shadow:var(--shadow);padding-top:calc(14px + env(safe-area-inset-top,0px));padding-right:max(10px,env(safe-area-inset-right,0px))}
+  .side.open{transform:none}
+  .main{padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .search{order:3;flex-basis:100%}
+  .brand small{display:none}
+  .top-actions .lbl-hide{display:none}
+}
+@media (max-width:520px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .row2{grid-template-columns:1fr}
+  .tl-year{grid-template-columns:1fr}
+  .tl-year>h4{position:static}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+</head>
+<body>
+<header class="top">
+  <button class="btn ghost icon-btn menu-toggle" id="menuBtn" aria-label="القائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M3 7h18v13H3z"/><path d="M5 4h14v3H5z"/><path d="M9.5 11h5"/></svg></div>
+    <div><h1>أرشيفي</h1><small>نظام شخصي لإدارة الوثائق والأرشيف المهني والأكاديمي</small></div>
+  </div>
+  <div class="search">
+    <span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+    <label for="q" class="sr">بحث</label>
+    <input id="q" type="search" autocomplete="off" placeholder="ابحث في العناوين والمحتوى… مثال: محضر جهة:الكلية سنة:2025">
+    <button class="help-btn" id="syntaxBtn" title="صيغ البحث المتقدم" aria-label="صيغ البحث المتقدم">؟</button>
+  </div>
+  <div class="top-actions">
+    <button class="btn primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl-hide">إضافة وثائق</span></button>
+    <button class="btn ghost icon-btn" id="settingsBtn" aria-label="الإعدادات والتصنيفات" title="الإعدادات والتصنيفات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <input type="file" id="fileInput" multiple hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.txt,.md,.csv,.docx,.html,.htm,application/pdf,image/*">
+  </div>
+</header>
+
+<div class="shell">
+  <aside class="side" id="side" aria-label="فهرس الأرشيف"></aside>
+  <main class="main" id="main"></main>
+</div>
+<div id="layer"></div>
+
+<script>
+"use strict";
+/* ============================== أدوات عامة ============================== */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const APP_VERSION = "1.1.0";
+// عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
+const VENDOR = location.protocol.startsWith("http") && !window.claude;
+const LIBS = VENDOR ? {
+  pdf: "vendor/pdf.min.js", pdfWorker: new URL("vendor/pdf.worker.min.js", location.href).href, mammoth: "vendor/mammoth.browser.min.js", tesseract: "vendor/tesseract/tesseract.min.js",
+  tessOpts: { workerPath: new URL("vendor/tesseract/worker.min.js", location.href).href, corePath: new URL("vendor/tesseract/core", location.href).href, langPath: new URL("vendor/tesseract/lang", location.href).href },
+} : {
+  pdf: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
+  pdfWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
+  mammoth: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+  tesseract: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", tessOpts: {},
+};
+const _scripts = {};
+function loadScript(url) {
+  return _scripts[url] ||= new Promise((res, rej) => {
+    const s = document.createElement("script"); s.src = url; s.onload = res;
+    s.onerror = () => { delete _scripts[url]; rej(new Error("تعذر تحميل مكتبة: " + url)); };
+    document.head.appendChild(s);
+  });
+}
+async function getPdfjs() {
+  await loadScript(LIBS.pdf);
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  return window.pdfjsLib;
+}
+const AR_MONTHS = ["جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان", "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+function fmtDate(iso, withDay = true) {
+  if (!iso) return "—";
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  if (!y) return "—";
+  return (withDay && d ? d + " " : "") + (m ? AR_MONTHS[m - 1] + " " : "") + y;
+}
+function fmtSize(b) { if (!b) return "—"; const u = ["ب", "ك.ب", "م.ب", "ج.ب"]; let i = 0; while (b >= 1024 && i < 3) { b /= 1024; i++; } return b.toFixed(i ? 1 : 0) + " " + u[i]; }
+const asnStr = n => String(n || 0).padStart(4, "0");
+let toastT;
+function toast(msg, ms = 2800) {
+  let t = $(".toast"); if (!t) { t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); document.body.appendChild(t); }
+  t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, ms);
+}
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+/* ============================== تطبيع النص العربي ============================== */
+// يُطبَّع كل حرف على حدة حتى نحتفظ بخريطة المواضع لإبراز نتائج البحث داخل النص الأصلي
+const _nc = new Map();
+function normChar(c) {
+  let r = _nc.get(c); if (r !== undefined) return r;
+  r = c.normalize("NFKD").replace(/[̀-ͯؐ-ًؚ-ٰٟۖ-ۭـ‌-‏]/g, "");
+  r = r.replace(/[ى]/g, "ي").replace(/[ة]/g, "ه").replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x6F0)).toLowerCase();
+  if (/\s/.test(r)) r = " ";
+  _nc.set(c, r); return r;
+}
+function norm(s) { s = s || ""; let o = ""; for (const c of s) o += normChar(c); return o; }
+function normWithMap(s) {
+  let n = "", map = []; let i = 0;
+  for (const c of s) { const r = normChar(c); for (let k = 0; k < r.length; k++) { n += r[k]; map.push(i); } i += c.length; }
+  map.push(i); return { n, map };
+}
+const STOP = new Set(norm("في من على الى إلى عن مع هذا هذه ذلك التي الذي الذين التى كان كانت وفي ومن او أو ثم قد لقد كل بين حيث عند بعد قبل غير ولا لا ما هو هي هم نحن انه أنه ان أن إن تم يتم ايضا أيضا وقد كما وهو وهي لها له منها فيها عليه عليها the and for with from that this des les une pour dans par sur est aux avec qui que").split(" "));
+function stem(w) {
+  if (/^[a-z0-9]/.test(w)) return w.length > 5 ? w.replace(/(ations?|ements?|ions?|es|s)$/, "") : w;
+  if (w.length > 5) w = w.replace(/^(وال|بال|كال|فال|لل)/, "");
+  if (w.length > 4) w = w.replace(/^ال/, "");
+  if (w.length > 5) w = w.replace(/(ات|ون|ين|ان|يه|ها|هم)$/, "");
+  return w;
+}
+function tokens(nText) {
+  const out = [];
+  for (const w of nText.split(/[^\p{L}\p{N}]+/u)) { if (w.length < 3 || STOP.has(w) || /^\d+$/.test(w)) continue; out.push(stem(w)); }
+  return out;
+}
+
+/* ============================== التصنيف الافتراضي ============================== */
+const PALETTE = ["#0C6A6D", "#3B5BA9", "#8A4FB0", "#B4531A", "#2E7D4F", "#A23A5E", "#5B6B12", "#1F7FA8", "#7A5A2B", "#4E5A66", "#C0392B", "#6B4FD0"];
+function E(name, match = "", algo = "auto", extra = {}) { return { id: uid(), name, match, algo, ...extra }; }
+function defaultTax() {
+  const d = (name, children, match = "") => { const p = E(name, match, "auto"); return [p, ...children.map(([n, m]) => E(n, m, "auto", { parent: p.id }))]; };
+  const domains = [
+    ...d("التدريس", [["المقاييس والمحاضرات", "محاضره، مقياس، السداسي، الحجم الساعي"], ["الامتحانات والمداولات", "امتحان، مداولات، كشف النقاط، استدراك"], ["شؤون الطلبة", "شهاده تسجيل، الطلبه، طعن"]]),
+    ...d("البحث العلمي", [["المقالات المنشورة", "الكلمات المفتاحيه، issn، doi، مجله، abstract"], ["الملتقيات والمؤتمرات", "ملتقى، مؤتمر، مداخله، يوم دراسي"], ["مشاريع البحث", "مشروع بحث، prfu، مشروع البحث"], ["التحكيم والخبرة", "تحكيم، تقرير خبره، تقييم مقال"]]),
+    ...d("الإشراف", [["مذكرات الماستر", "مذكره ماستر، شهاده الماستر"], ["أطروحات الدكتوراه", "اطروحه، دكتوراه"]]),
+    ...d("الإدارة واللجان", [["المجلس العلمي", "المجلس العلمي"], ["اللجان البيداغوجية", "اللجنه البيداغوجيه، لجنه بيداغوجيه"]]),
+    ...d("المسار المهني", [["التوظيف والترقية", "ترقيه، رتبه، توظيف، تثبيت، شهاده عمل"], ["الشهادات والمؤهلات", "دبلوم، تاهيل جامعي، كشف نقاط"]]),
+    ...d("شخصي وإداري", [["وثائق شخصية", "بطاقه التعريف، جواز السفر، شهاده الميلاد"], ["مالية", "فاتوره، وصل، كشف الراتب"]]),
+  ];
+  domains.forEach((x, i) => x.color = PALETTE[i % PALETTE.length]);
+  const types = [
+    ["مقال علمي", "الكلمات المفتاحيه، abstract، keywords، قائمه المراجع", "auto"], ["شهادة", "شهاده يشهد", "any"], ["محضر", "محضر", "any"], ["مراسلة رسمية", "مراسله ارساليه الموضوع المرجع", "any"],
+    ["قرار", "قرار يقرر الماده", "any"], ["عقد / اتفاقية", "عقد اتفاقيه الطرف", "any"], ["مذكرة / أطروحة", "مذكره اطروحه لنيل شهاده", "any"], ["دعوة / برنامج ملتقى", "دعوه برنامج الملتقى", "any"],
+    ["تقرير", "تقرير", "any"], ["فاتورة / وصل", "فاتوره وصل المبلغ", "any"], ["سيرة ذاتية", "سيره ذاتيه cv", "any"], ["محاضرة / درس", "محاضره، درس، مقياس", "auto"],
+  ].map(([n, m, a], i) => E(n, m, a, { color: PALETTE[i % PALETTE.length] }));
+  const corrs = [
+    ["وزارة التعليم العالي والبحث العلمي", "وزاره التعليم العالي", "exact"], ["رئاسة الجامعة", "رئاسه الجامعه مدير الجامعه", "any"], ["كلية الحقوق والعلوم السياسية", "كليه الحقوق والعلوم السياسيه", "exact"],
+    ["المديرية العامة للبحث العلمي DGRSDT", "dgrsdt المديريه العامه للبحث العلمي", "any"], ["المنصة الجزائرية للمجلات ASJP", "asjp المنصه الجزائريه للمجلات", "any"], ["مخبر البحث", "مخبر", "any"],
+  ].map(([n, m, a]) => E(n, m, a));
+  const tags = [["عاجل", "عاجل", "any"], ["للترقية", "ترقيه", "any"], ["أصل", "", "none"], ["نسخة مصادق عليها", "طبق الاصل", "exact"], ["Scopus", "scopus", "any"], ["مهم", "", "none"]].map(([n, m, a]) => E(n, m, a));
+  return { v: 1, domains, types, corrs, tags, views: [], nextAsn: 1, settings: { ocr: "auto", ocrPages: 8, autoAI: false, ocrLangs: "ara+fra+eng" } };
+}
+
+/* ============================== التخزين ============================== */
+// وضعان: محلي (IndexedDB في هذا المتصفح) أو سحابي (قاعدة بيانات المنصة + مخزن الملفات) عند فتح الصفحة كـ Artifact.
+class LocalStore {
+  constructor() { this.kind = "local"; }
+  async open() {
+    this.db = await new Promise((res, rej) => {
+      const r = indexedDB.open("arshifi", 1);
+      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore("docs", { keyPath: "id" }); d.createObjectStore("files"); d.createObjectStore("meta"); };
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+  }
+  tx(store, mode, fn) { return new Promise((res, rej) => { const t = this.db.transaction(store, mode); const s = t.objectStore(store); const out = fn(s); t.oncomplete = () => res(out instanceof IDBRequest ? out.result : out); t.onerror = () => rej(t.error); }); }
+  async loadAll() {
+    const docs = await this.tx("docs", "readonly", s => s.getAll());
+    const tax = await this.tx("meta", "readonly", s => s.get("tax"));
+    return { docs: docs || [], tax: tax || null };
+  }
+  saveDoc(doc) { return this.tx("docs", "readwrite", s => s.put(doc)); }
+  deleteDoc(id) { return this.tx("docs", "readwrite", s => s.delete(id)); }
+  saveTax(tax) { return this.tx("meta", "readwrite", s => s.put(tax, "tax")); }
+  async putFile(id, blob) { await this.tx("files", "readwrite", s => s.put(blob, id)); return { kind: "idb", id }; }
+  async getFile(ref) { return ref ? this.tx("files", "readonly", s => s.get(ref.id)) : null; }
+  delFile(ref) { return ref ? this.tx("files", "readwrite", s => s.delete(ref.id)) : null; }
+}
+class CloudStore {
+  constructor(db, assets, uidv, local) { this.kind = "cloud"; this.col = db.collection("data/users/" + uidv); this.assets = assets; this.local = local; this.chain = {}; }
+  async loadAll() {
+    const snap = await this.col.get(); const docs = []; let tax = null;
+    for (const d of snap.docs) { const v = d.data(); if (!v) continue; if (d.id === "taxonomy") tax = structuredClone(v); else if (d.id.startsWith("d_")) docs.push(structuredClone(v)); }
+    return { docs, tax };
+  }
+  // كتابة واحدة في كل مرة لكل وثيقة
+  queue(key, fn) { const p = (this.chain[key] || Promise.resolve()).catch(() => {}).then(fn); this.chain[key] = p; return p; }
+  saveDoc(doc) { return this.queue("d_" + doc.id, () => this.col.doc("d_" + doc.id).set(doc)); }
+  deleteDoc(id) { return this.queue("d_" + id, () => this.col.doc("d_" + id).delete()); }
+  saveTax(tax) { return this.queue("taxonomy", () => this.col.doc("taxonomy").set(tax)); }
+  async putFile(id, blob, name, doc) {
+    const ok = this.assets && (/^image\/(png|jpe?g|gif|webp)$/.test(blob.type) || blob.type === "application/pdf" || /^text\/(plain|markdown|csv)$/.test(blob.type));
+    if (ok) {
+      try { const r = await this.assets.upload(blob, { type: blob.type }); return { kind: "asset", id: r.id }; }
+      catch (e) { console.warn("asset upload failed, keeping file on this device", e); }
+    }
+    return this.local ? this.local.putFile(id, blob) : null;
+  }
+  async getFile(ref) {
+    if (!ref) return null;
+    if (ref.kind === "asset") { const r = await fetch("/_blob/" + ref.id); if (!r.ok) throw new Error("تعذر جلب الملف"); return r.blob(); }
+    return this.local ? this.local.getFile(ref) : null;
+  }
+  async delFile(ref) {
+    if (!ref) return;
+    if (ref.kind === "asset" && this.assets) { try { await this.assets.delete(ref.id); } catch (e) { console.warn(e); } }
+    else if (this.local) await this.local.delFile(ref);
+  }
+}
+
+// وضع المجلد: الأرشيف كله ملفات عادية داخل مجلد تختاره (مثلاً في iCloud Drive) فيتزامن بين أجهزتك.
+//   archive.json        التصنيفات والإعدادات
+//   records/<id>.json   بطاقة فهرسة لكل وثيقة (البيانات + النص + الصورة المصغرة)
+//   documents/          الملفات الأصلية بأسماء مقروءة: «0007 - عنوان الوثيقة.pdf»
+const FS_OK = typeof window.showDirectoryPicker === "function";
+const safeName = s => String(s || "").replace(/[\/\\:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "وثيقة";
+const README_TXT = `هذا المجلد هو أرشيفك في تطبيق «أرشيفي».
+
+documents/    الملفات الأصلية، يمكنك فتحها مباشرة من Finder.
+records/      بطاقات الفهرسة (العنوان، النوع، الجهة، الوسوم، النص المستخرج).
+archive.json  التصنيفات والإعدادات.
+
+لا تُعِد تسمية الملفات ولا تحذفها من هنا؛ استعمل التطبيق لذلك.
+إذا كان المجلد في iCloud Drive فاختر له «إبقاء التنزيل» (Keep Downloaded) من قائمة Finder حتى تبقى الملفات متاحة دون اتصال.
+`;
+class FolderStore {
+  constructor(root, local) { this.kind = "folder"; this.root = root; this.local = local; this.name = root.name; this.seen = new Map(); this.pending = 0; }
+  async init() {
+    this.rec = await this.root.getDirectoryHandle("records", { create: true });
+    this.docs = await this.root.getDirectoryHandle("documents", { create: true });
+    try { await this.root.getFileHandle("README.txt"); } catch (e) { await this.writeText(this.root, "README.txt", README_TXT); }
+    return this;
+  }
+  async writeText(dir, name, text) { const fh = await dir.getFileHandle(name, { create: true }); const w = await fh.createWritable(); await w.write(text); await w.close(); return fh; }
+  async hasArchive() { try { await this.root.getFileHandle("archive.json"); return true; } catch (e) { return false; } }
+  async readTax() { const f = await (await this.root.getFileHandle("archive.json")).getFile(); this.taxM = f.lastModified; return JSON.parse(await f.text()); }
+  async scan(onlyChanged) {
+    const now = new Map(), docs = []; let pending = 0;
+    for await (const [name, h] of this.rec.entries()) {
+      if (h.kind !== "file") continue;
+      if (name.endsWith(".icloud")) { pending++; continue; } // ملف لم يُنزَّل بعد من iCloud
+      if (!name.endsWith(".json") || name.startsWith(".")) continue;
+      try { const f = await h.getFile(); now.set(name, f.lastModified); if (!onlyChanged || this.seen.get(name) !== f.lastModified) docs.push(JSON.parse(await f.text())); }
+      catch (e) { console.warn("record", name, e); }
+    }
+    const removed = [...this.seen.keys()].filter(n => !now.has(n)).map(n => n.replace(/\.json$/, ""));
+    this.seen = now; this.pending = pending; return { docs, removed };
+  }
+  async loadAll() { let tax = null; try { tax = await this.readTax(); } catch (e) {} const { docs } = await this.scan(false); return { docs, tax }; }
+  async changes() {
+    const { docs, removed } = await this.scan(true); let tax = null;
+    try { const f = await (await this.root.getFileHandle("archive.json")).getFile(); if (f.lastModified !== this.taxM) { tax = JSON.parse(await f.text()); this.taxM = f.lastModified; } } catch (e) {}
+    return { changed: docs, removed, tax };
+  }
+  async saveDoc(doc) { const fh = await this.writeText(this.rec, doc.id + ".json", JSON.stringify(doc)); this.seen.set(doc.id + ".json", (await fh.getFile()).lastModified); }
+  async deleteDoc(id) { try { await this.rec.removeEntry(id + ".json"); } catch (e) {} this.seen.delete(id + ".json"); }
+  async saveTax(tax) { const fh = await this.writeText(this.root, "archive.json", JSON.stringify(tax, null, 1)); this.taxM = (await fh.getFile()).lastModified; }
+  async putFile(id, blob, fname, doc) {
+    const ext = (fname || "").includes(".") ? "." + fname.split(".").pop().toLowerCase() : "";
+    let name = `${asnStr(doc?.asn)} - ${safeName(doc?.title || fname)}${ext}`;
+    try { await this.docs.getFileHandle(name); name = name.replace(/(\.[^.]*)?$/, ` (${id.slice(-4)})$1`); } catch (e) {}
+    let fh; try { fh = await this.docs.getFileHandle(name, { create: true }); }
+    catch (e) { name = `${asnStr(doc?.asn)}-${id}${ext}`; fh = await this.docs.getFileHandle(name, { create: true }); } // نظام ملفات لا يقبل الاسم: اسم لاتيني بديل
+    const w = await fh.createWritable(); await w.write(blob); await w.close();
+    return { kind: "folder", name };
+  }
+  async handleFor(ref) {
+    try { return await this.docs.getFileHandle(ref.name); }
+    catch (e) { // أسماء الملفات العربية قد يُعاد تطبيعها عند المزامنة
+      const want = ref.name.normalize("NFC"); let cloud = false;
+      for await (const [n, h] of this.docs.entries()) { if (n.normalize("NFC") === want) return h; if (n.normalize("NFC") === "." + want + ".icloud") cloud = true; }
+      throw new Error(cloud ? "الملف لم يُنزَّل بعد من iCloud؛ افتح المجلد في Finder وانتظر اكتمال التنزيل" : "الملف الأصلي غير موجود في مجلد الأرشيف");
+    }
+  }
+  async getFile(ref) { if (!ref) return null; if (ref.kind !== "folder") return this.local ? this.local.getFile(ref) : null; return (await this.handleFor(ref)).getFile(); }
+  async delFile(ref) { if (!ref) return; if (ref.kind !== "folder") return this.local?.delFile(ref); try { const h = await this.handleFor(ref); await this.docs.removeEntry(h.name); } catch (e) { console.warn(e); } }
+}
+async function getStorageChoice(local) { try { return local ? await local.tx("meta", "readonly", s => s.get("storage")) : null; } catch (e) { return null; } }
+async function setStorageChoice(local, v) { try { if (local) await local.tx("meta", "readwrite", s => s.put(v, "storage")); } catch (e) { console.warn("cannot remember storage choice", e); } }
+async function folderPermission(h, ask) {
+  if (!h.queryPermission) return "granted";
+  let p = await h.queryPermission({ mode: "readwrite" });
+  if (p !== "granted" && ask) p = await h.requestPermission({ mode: "readwrite" });
+  return p;
+}
+
+/* ============================== الحالة ============================== */
+const S = {
+  store: null, docs: [], tax: null, demo: false, demoDismissed: false,
+  sel: { kind: "all" }, q: "", view: "grid", sort: "added-desc", page: 1,
+  open: null, tab: "info", side: false, caps: { sample: null, imgs: null, downloads: null },
+  queue: [], aiBusy: {},
+};
+try { const p = JSON.parse(localStorage.getItem("arshifi.ui") || "{}"); if (p.view) S.view = p.view; if (p.sort) S.sort = p.sort; S.demoDismissed = !!p.demoDismissed; } catch (e) {}
+function saveUI() { try { localStorage.setItem("arshifi.ui", JSON.stringify({ view: S.view, sort: S.sort, demoDismissed: S.demoDismissed })); } catch (e) {} }
+
+const ent = (kind, id) => id ? (S.tax[kind] || []).find(x => x.id === id) : null;
+const entName = (kind, id) => ent(kind, id)?.name || "";
+function typeColor(doc) { return ent("types", doc.type)?.color || "#4E5A66"; }
+function domainPath(id) { const d = ent("domains", id); if (!d) return ""; const p = d.parent ? ent("domains", d.parent) : null; return p ? p.name + " › " + d.name : d.name; }
+function domainAndChildren(id) { return [id, ...S.tax.domains.filter(x => x.parent === id).map(x => x.id)]; }
+const allDocs = () => S.demo ? DEMO_DOCS : S.docs;
+
+function indexDoc(doc) {
+  doc._n = {
+    title: norm(doc.title), file: norm(doc.filename),
+    meta: norm([entName("types", doc.type), entName("corrs", doc.corr), domainPath(doc.domain), (doc.tags || []).map(t => entName("tags", t)).join(" "), doc.notes, doc.summary].join(" ")),
+    text: norm(doc.text || ""),
+  };
+  doc._vec = null;
+}
+function clean(doc) { const o = {}; for (const k in doc) if (k[0] !== "_") o[k] = doc[k]; return o; }
+
+/* ============================== الوثائق التجريبية ============================== */
+let DEMO_DOCS = [];
+function makeThumbFromText(title, lines, color, kind) {
+  const c = document.createElement("canvas"); c.width = 300; c.height = 340; const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, 300, 340);
+  g.fillStyle = color; g.fillRect(0, 0, 300, 6);
+  g.direction = "rtl"; g.textAlign = "right"; g.fillStyle = "#1b2630";
+  g.font = "600 11px 'IBM Plex Sans Arabic', Tahoma"; g.fillText("الجمهورية الجزائرية الديمقراطية الشعبية", 285, 28);
+  g.font = "10px 'IBM Plex Sans Arabic', Tahoma"; g.fillStyle = "#6a7782"; g.fillText(kind || "", 285, 44);
+  g.fillStyle = "#1b2630"; g.font = "700 15px 'IBM Plex Sans Arabic', Tahoma";
+  wrapText(g, title, 285, 78, 260, 22, 3);
+  g.font = "10.5px 'IBM Plex Sans Arabic', Tahoma"; g.fillStyle = "#56636e";
+  let y = 150; for (const l of lines) { y = wrapText(g, l, 285, y, 260, 17, 3) + 6; if (y > 300) break; }
+  g.strokeStyle = color; g.globalAlpha = .55; g.lineWidth = 2; g.beginPath(); g.arc(60, 290, 26, 0, Math.PI * 2); g.stroke(); g.beginPath(); g.arc(60, 290, 20, 0, Math.PI * 2); g.stroke(); g.globalAlpha = 1;
+  return c.toDataURL("image/jpeg", .82);
+}
+function wrapText(g, text, x, y, maxW, lh, maxLines) {
+  const words = String(text).split(/\s+/); let line = "", n = 0;
+  for (const w of words) { const t = line ? line + " " + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, y); y += lh; line = w; if (++n >= maxLines) return y; } else line = t; }
+  if (line) { g.fillText(line, x, y); y += lh; } return y;
+}
+function buildDemo() {
+  const T = S.tax; const by = (k, n) => T[k].find(x => x.name === n)?.id || null;
+  const raw = [
+    ["محضر المداولات النهائية للسداسي الأول — ماستر علاقات دولية", "محضر", "كلية الحقوق والعلوم السياسية", "الامتحانات والمداولات", ["مهم"], "2025-02-12", "محضر مداولات لجنة السداسي الأول لطلبة السنة الأولى ماستر تخصص علاقات دولية. اجتمعت اللجنة البيداغوجية بتاريخ 12 فيفري 2025 وتمت دراسة نتائج الامتحانات والاستدراك وضبط قائمة الناجحين.", 3],
+    ["شهادة المشاركة في الملتقى الوطني حول الأمن الطاقوي في الساحل", "شهادة", "مخبر البحث", "الملتقيات والمؤتمرات", ["للترقية"], "2024-11-27", "يشهد مخبر الدراسات الاستراتيجية والأمنية أن الأستاذ شارك بمداخلة بعنوان الأمن الطاقوي ورهانات التنافس الدولي في منطقة الساحل خلال الملتقى الوطني المنعقد يومي 26 و27 نوفمبر 2024.", 1],
+    ["مقال: التحولات الجيوسياسية في منطقة الساحل وأثرها على الأمن الإقليمي", "مقال علمي", "المنصة الجزائرية للمجلات ASJP", "المقالات المنشورة", ["للترقية", "Scopus"], "2025-06-30", "ملخص: تتناول هذه الدراسة التحولات الجيوسياسية في منطقة الساحل الإفريقي بعد 2020 وأثرها على الأمن الإقليمي. الكلمات المفتاحية: الساحل، الأمن الإقليمي، التنافس الدولي، الإرهاب. مجلة العلوم السياسية والقانون، المجلد 9، العدد 2. DOI.", 18],
+    ["قرار تعيين عضو في المجلس العلمي للكلية", "قرار", "رئاسة الجامعة", "المجلس العلمي", ["أصل"], "2023-10-04", "إن مدير الجامعة، بمقتضى المرسوم التنفيذي، يقرر: المادة الأولى: يعين الأستاذ عضوا في المجلس العلمي لكلية الحقوق والعلوم السياسية لعهدة مدتها ثلاث سنوات.", 1],
+    ["مراسلة: طلب تحكيم مقال لمجلة دراسات استراتيجية", "مراسلة رسمية", "المنصة الجزائرية للمجلات ASJP", "التحكيم والخبرة", ["عاجل"], "2025-09-15", "الموضوع: طلب تحكيم مقال. يشرفنا أن نطلب منكم تحكيم المقال المرفق الموسوم الدبلوماسية الجزائرية والوساطة في النزاعات الإقليمية وإرسال تقرير الخبرة في أجل أقصاه 21 يوما.", 2],
+    ["برنامج المقياس: نظريات العلاقات الدولية — السنة الثانية ليسانس", "محاضرة / درس", "كلية الحقوق والعلوم السياسية", "المقاييس والمحاضرات", [], "2025-09-20", "مقياس نظريات العلاقات الدولية. الحجم الساعي: محاضرة وأعمال موجهة. المحاور: الواقعية والواقعية الجديدة، الليبرالية، البنائية، النظريات النقدية، مدرسة كوبنهاغن والأمننة.", 6],
+    ["محضر مناقشة مذكرة ماستر: الدبلوماسية الرقمية", "محضر", "كلية الحقوق والعلوم السياسية", "مذكرات الماستر", [], "2025-06-18", "محضر مناقشة مذكرة ماستر لنيل شهادة الماستر في العلوم السياسية بعنوان الدبلوماسية الرقمية وأثرها على السياسة الخارجية. لجنة المناقشة: رئيسا، مشرفا ومقررا، عضوا مناقشا.", 2],
+    ["قرار الترقية إلى رتبة أستاذ محاضر قسم أ", "قرار", "وزارة التعليم العالي والبحث العلمي", "التوظيف والترقية", ["للترقية", "نسخة مصادق عليها"], "2022-03-08", "وزارة التعليم العالي والبحث العلمي. قرار يتضمن ترقية إلى رتبة أستاذ محاضر قسم أ بعد التأهيل الجامعي. نسخة طبق الأصل.", 1],
+    ["اتفاقية مشروع بحث PRFU: الحوكمة الأمنية في الفضاء المتوسطي", "عقد / اتفاقية", "المديرية العامة للبحث العلمي DGRSDT", "مشاريع البحث", [], "2024-01-15", "اتفاقية تنفيذ مشروع البحث التكويني الجامعي PRFU بين المديرية العامة للبحث العلمي والتطوير التكنولوجي ورئيس المشروع. مدة المشروع أربع سنوات.", 4],
+  ];
+  DEMO_DOCS = raw.map(([title, type, corr, dom, tags, date, text, pages], i) => {
+    const t = by("types", type); const color = ent("types", t)?.color || PALETTE[i];
+    const doc = { id: "demo" + i, demo: true, asn: i + 1, title, filename: title.slice(0, 40) + ".pdf", mime: "application/pdf", ext: "pdf", size: 120000 + i * 53000, added: new Date(Date.now() - i * 86400000 * 3).toISOString(), docDate: date, type: t, corr: by("corrs", corr), domain: by("domains", dom), tags: tags.map(n => by("tags", n)).filter(Boolean), notes: "", starred: i === 2, inbox: i === 4 || i === 5, pages, text, textSource: "pdf", thumb: "", file: null };
+    doc.thumb = makeThumbFromText(title, [text.slice(0, 140)], color, type);
+    indexDoc(doc); return doc;
+  });
+}
+
+/* ============================== استخراج النص والمعاينات ============================== */
+async function canvasToDataURL(c, w = 320, q = .72) { const r = w / c.width; const t = document.createElement("canvas"); t.width = w; t.height = Math.round(c.height * r); t.getContext("2d").drawImage(c, 0, 0, t.width, t.height); return t.toDataURL("image/jpeg", q); }
+async function renderPdfPage(pdf, n, scale) { const page = await pdf.getPage(n); const vp = page.getViewport({ scale }); const c = document.createElement("canvas"); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height); const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); await page.render({ canvasContext: g, viewport: vp }).promise; return c; }
+function ocrScaleFor(page) { const vp = page.getViewport({ scale: 1 }); return Math.min(2.4, 1700 / Math.max(vp.width, vp.height)); }
+
+// إعادة بناء الأسطر من مواضع الحروف: بعض ملفات PDF العربية تخزّن الحروف منفصلة وبترتيب بصري (من اليسار إلى اليمين)
+const AR_RE = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/, PRES_RE = /[\uFB50-\uFDFF\uFE70-\uFEFF]/;
+function pdfPageText(items) {
+  const its = items.filter(it => it.str && it.transform).map(it => ({ s: it.str, x: it.transform[4], y: it.transform[5], w: it.width || 0, h: Math.abs(it.transform[3]) || it.height || 10 }));
+  const lines = [];
+  for (const it of its) { let L = lines.find(l => Math.abs(l.y - it.y) < it.h * .45); if (!L) { L = { y: it.y, items: [] }; lines.push(L); } L.items.push(it); }
+  lines.sort((a, b) => b.y - a.y);
+  return lines.map(L => {
+    const arCount = L.items.reduce((n, it) => n + [...it.s].filter(c => AR_RE.test(c)).length, 0);
+    const allCount = L.items.reduce((n, it) => n + it.s.replace(/\s/g, "").length, 0) || 1;
+    const rtl = arCount / allCount > .3;
+    const seq = [...L.items].sort((a, b) => rtl ? b.x - a.x : a.x - b.x);
+    if (rtl) {
+      for (const it of seq) if (PRES_RE.test(it.s) && it.s.length > 1 && !/[A-Za-z0-9]/.test(it.s)) it.s = [...it.s].reverse().join("");
+      // إعادة الأرقام والكلمات اللاتينية داخل السطر العربي إلى ترتيبها الصحيح
+      for (let i = 0; i < seq.length;) { if (AR_RE.test(seq[i].s) || !seq[i].s.trim()) { i++; continue; } let j = i; while (j + 1 < seq.length && !AR_RE.test(seq[j + 1].s) && seq[j + 1].s.trim()) j++; if (j > i) seq.splice(i, j - i + 1, ...seq.slice(i, j + 1).reverse()); i = j + 1; }
+    }
+    let out = "", prev = null;
+    for (const it of seq) {
+      if (prev) { const gap = rtl ? (Math.max(prev.x, it.x) - Math.min(prev.x + prev.w, it.x + it.w)) : (it.x - (prev.x + prev.w)); if (gap > it.h * .18 && !/\s$/.test(out) && !/^\s/.test(it.s)) out += " "; }
+      out += it.s; prev = it;
+    }
+    return out.replace(/[ \t]+/g, " ").trim();
+  }).filter(Boolean).join("\n");
+}
+async function extractPDF(buf, report) {
+  const pdfjs = await getPdfjs();
+  const pdf = await pdfjs.getDocument({ data: buf }).promise;
+  const pages = pdf.numPages; let text = "";
+  for (let i = 1; i <= pages; i++) {
+    const p = await pdf.getPage(i); const tc = await p.getTextContent();
+    text += pdfPageText(tc.items) + "\n\n";
+    report(`قراءة طبقة النص ${i}/${pages}`, i / pages * .3);
+  }
+  const thumb = await canvasToDataURL(await renderPdfPage(pdf, 1, 1.0));
+  const meaningful = text.replace(/\s+/g, "").length;
+  let source = "pdf";
+  if (meaningful < 40 * Math.min(pages, 3)) {
+    const limit = Math.min(pages, S.tax.settings.ocrPages || 8); const canvases = [];
+    for (let i = 1; i <= limit; i++) { const p = await pdf.getPage(i); canvases.push(await renderPdfPage(pdf, i, ocrScaleFor(p))); }
+    const r = await runOCR(canvases, report);
+    if (r.text.trim()) { text = r.text + (pages > limit ? `\n\n[تم التعرف الضوئي على ${limit} من ${pages} صفحة]` : ""); source = r.engine; }
+    else source = "none";
+  }
+  return { text: (source === "pdf" ? text.normalize("NFKC") : text).trim(), pages, thumb, source };
+}
+async function loadImage(blob) { const url = URL.createObjectURL(blob); try { const img = new Image(); img.src = url; await img.decode(); const c = document.createElement("canvas"); const s = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight)); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s); const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height); return c; } finally { URL.revokeObjectURL(url); } }
+async function extractImage(blob, report) { const c = await loadImage(blob); const thumb = await canvasToDataURL(c); const r = await runOCR([c], report); return { text: r.text.trim(), pages: 1, thumb, source: r.text.trim() ? r.engine : "none" }; }
+async function extractDocx(buf) { await loadScript(LIBS.mammoth); const r = await window.mammoth.extractRawText({ arrayBuffer: buf }); return { text: r.value.trim(), pages: Math.max(1, Math.round(r.value.length / 2800)), source: "docx" }; }
+
+/* ---------- التعرف الضوئي على الحروف ---------- */
+let tessWorker = null, tessReport = () => {};
+async function ocrTesseract(canvases, report) {
+  tessReport = report; await loadScript(LIBS.tesseract);
+  if (!tessWorker) {
+    report("تحميل محرك التعرف الضوئي (أول مرة فقط)…", .32);
+    tessWorker = await Promise.race([
+      window.Tesseract.createWorker(S.tax.settings.ocrLangs || "ara+fra+eng", 1, { ...LIBS.tessOpts, logger: m => { if (m.status === "recognizing text") tessReport(`تعرف ضوئي… ${Math.round(m.progress * 100)}%`, .35 + m.progress * .1); } }),
+      sleep(90000).then(() => { throw new Error("انتهت مهلة تحميل محرك التعرف الضوئي"); }),
+    ]);
+  }
+  let out = [];
+  for (let i = 0; i < canvases.length; i++) { report(`تعرف ضوئي (Tesseract) — صفحة ${i + 1}/${canvases.length}`, .35 + .55 * i / canvases.length); const { data } = await tessWorker.recognize(canvases[i]); out.push(data.text); }
+  return out.join("\n\n");
+}
+async function ocrClaude(canvases, report) {
+  const out = [];
+  for (let i = 0; i < canvases.length; i++) {
+    report(`تعرف ضوئي بواسطة Claude — صفحة ${i + 1}/${canvases.length}`, .35 + .55 * i / canvases.length);
+    const blob = await new Promise(r => canvases[i].toBlob(r, "image/jpeg", .85));
+    const r = await S.caps.sample("هذه صورة صفحة ممسوحة ضوئياً من وثيقة (قد تكون بالعربية أو الفرنسية أو الإنجليزية). انسخ نصها كاملاً كما هو حرفياً، مع الحفاظ على ترتيب الفقرات والأسطر. لا تضف أي شرح أو تعليق أو تنسيق Markdown؛ أعد النص فقط. إذا كانت الصفحة فارغة أعد سطراً فارغاً.", { images: [blob], modelTier: "default", cache: false });
+    out.push(r.text || "");
+  }
+  return out.join("\n\n");
+}
+async function runOCR(canvases, report) {
+  const mode = S.tax.settings.ocr || "auto";
+  if (mode === "off") return { text: "", engine: "none" };
+  const claudeOK = !!(S.caps.sample && S.caps.imgs);
+  if ((mode === "auto" || mode === "claude") && claudeOK) {
+    try { return { text: await ocrClaude(canvases, report), engine: "ocr-claude" }; }
+    catch (e) { console.warn(e); if (mode === "claude") throw new Error("تعذر التعرف الضوئي عبر Claude: " + (e.message || e.code)); }
+  }
+  try { return { text: await ocrTesseract(canvases, report), engine: "ocr-tesseract" }; }
+  catch (e) { console.warn(e); report("لم يتوفر التعرف الضوئي: " + (e.message || e), .9); return { text: "", engine: "none" }; }
+}
+
+/* ============================== التصنيف الذكي ============================== */
+const MONTHS = { "جانفي": 1, "يناير": 1, "janvier": 1, "january": 1, "فيفري": 2, "فبراير": 2, "fevrier": 2, "february": 2, "مارس": 3, "mars": 3, "march": 3, "افريل": 4, "ابريل": 4, "avril": 4, "april": 4, "ماي": 5, "مايو": 5, "mai": 5, "may": 5, "جوان": 6, "يونيو": 6, "juin": 6, "june": 6, "جويليه": 7, "يوليو": 7, "juillet": 7, "july": 7, "اوت": 8, "اغسطس": 8, "aout": 8, "august": 8, "سبتمبر": 9, "septembre": 9, "september": 9, "اكتوبر": 10, "octobre": 10, "october": 10, "نوفمبر": 11, "novembre": 11, "november": 11, "ديسمبر": 12, "decembre": 12, "december": 12 };
+function extractDate(nText) {
+  const now = new Date().getFullYear() + 1; const ok = (y, m, d) => y >= 1950 && y <= now && m >= 1 && m <= 12 && d >= 1 && d <= 31;
+  const pad = n => String(n).padStart(2, "0"); const cands = [];
+  let m; const t = nText.slice(0, 6000);
+  const r1 = /(\d{1,2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{4})/g; while ((m = r1.exec(t))) if (ok(+m[3], +m[2], +m[1])) cands.push([m.index, `${m[3]}-${pad(m[2])}-${pad(m[1])}`]);
+  const r2 = /(\d{4})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{1,2})/g; while ((m = r2.exec(t))) if (ok(+m[1], +m[2], +m[3])) cands.push([m.index, `${m[1]}-${pad(m[2])}-${pad(m[3])}`]);
+  const names = Object.keys(MONTHS).join("|");
+  const r3 = new RegExp(`(\\d{1,2})\\s*(?:er)?\\s*(${names})\\s*(\\d{4})`, "g"); while ((m = r3.exec(t))) if (ok(+m[3], MONTHS[m[2]], +m[1])) cands.push([m.index, `${m[3]}-${pad(MONTHS[m[2]])}-${pad(m[1])}`]);
+  // تفضيل تاريخ التحرير («حرر في/بتاريخ»، «fait le») على أي تاريخ آخر يرد في المتن
+  const signed = cands.find(([i]) => /حرر|fait|بتاريخ|le\s*$/.test(t.slice(Math.max(0, i - 30), i)));
+  cands.sort((a, b) => a[0] - b[0]); return (signed || cands[0])?.[1] || "";
+}
+function docVec(doc, df, N) {
+  if (doc._vec) return doc._vec;
+  const tf = new Map(); const toks = tokens(doc._n.title + " " + doc._n.title + " " + doc._n.text.slice(0, 40000));
+  for (const t of toks) tf.set(t, (tf.get(t) || 0) + 1);
+  const v = new Map(); let norm2 = 0;
+  for (const [t, c] of tf) { const w = (1 + Math.log(c)) * Math.log(1 + N / (1 + (df.get(t) || 0))); v.set(t, w); norm2 += w * w; }
+  norm2 = Math.sqrt(norm2) || 1; for (const [t, w] of v) v.set(t, w / norm2);
+  return doc._vec = v;
+}
+let _df = null;
+function corpus() {
+  if (_df) return _df; const docs = allDocs(); const df = new Map();
+  for (const d of docs) for (const t of new Set(tokens(d._n.title + " " + d._n.text.slice(0, 40000)))) df.set(t, (df.get(t) || 0) + 1);
+  return _df = { df, N: docs.length };
+}
+function invalidateCorpus() { _df = null; allDocs().forEach(d => d._vec = null); }
+function cos(a, b) { let s = 0; const [x, y] = a.size < b.size ? [a, b] : [b, a]; for (const [t, w] of x) { const u = y.get(t); if (u) s += w * u; } return s; }
+function similar(doc, n = 6) {
+  const { df, N } = corpus(); const v = docVec(doc, df, N);
+  return allDocs().filter(d => d.id !== doc.id).map(d => [d, cos(v, docVec(d, df, N))]).filter(x => x[1] > .06).sort((a, b) => b[1] - a[1]).slice(0, n);
+}
+// كلمات المطابقة: تُفصل بفاصلة لعبارات متعددة الكلمات، وإلا فبالمسافات
+const terms = m => (/[,،]/.test(m) ? m.split(/[,،]/) : m.split(/\s+/)).map(w => w.trim()).filter(Boolean);
+function ruleMatch(e, nAll, rawAll) {
+  const m = norm(e.match || "").trim();
+  switch (e.algo) {
+    case "any": return !!m && terms(m).some(w => nAll.includes(w));
+    case "all": return !!m && terms(m).every(w => nAll.includes(w));
+    case "exact": return !!m && nAll.includes(m);
+    case "regex": try { return !!e.match && new RegExp(e.match, "iu").test(rawAll); } catch (x) { return false; }
+    case "auto": return !!m && m.split(/[,،]/).map(w => w.trim()).some(w => w.length > 2 && nAll.includes(w)); // «تلقائي»: عبارات مفصولة بفواصل
+    default: return false;
+  }
+}
+// يقترح المجال والنوع والجهة والوسوم: قواعد مطابقة (على غرار Paperless) + تعلّم من الوثائق المصنفة سابقاً (على غرار DEVONthink)
+function classify(doc) {
+  const nAll = doc._n.title + " " + doc._n.file + " " + doc._n.text; const rawAll = doc.title + " " + (doc.text || "");
+  const { df, N } = corpus(); const v = docVec(doc, df, N); const docs = allDocs().filter(d => d.id !== doc.id);
+  const field = { domains: "domain", types: "type", corrs: "corr" };
+  const centroidScore = (kind, e) => {
+    const members = docs.filter(d => kind === "tags" ? (d.tags || []).includes(e.id) : d[field[kind]] === e.id);
+    if (!members.length) return 0; let s = 0; for (const d of members) s += cos(v, docVec(d, df, N)); return s / members.length;
+  };
+  const res = { reasons: {} };
+  for (const kind of ["domains", "types", "corrs"]) {
+    let best = null, bs = 0;
+    for (const e of S.tax[kind]) {
+      if (e.algo === "none") continue;
+      let s = ruleMatch(e, nAll, rawAll) ? 1 : 0; let why = s ? "قاعدة مطابقة" : "";
+      if (e.algo === "auto") { const c = centroidScore(kind, e); if (c > .12) { s += c * 2; why = why ? why + " + تشابه" : "تشابه مع وثائق مصنفة"; } }
+      if (kind === "domains" && s && e.parent) s += .05; // تفضيل المجال الفرعي الأدق
+      if (s > bs) { bs = s; best = e; res.reasons[field[kind]] = why; }
+    }
+    if (best && bs >= .3) res[field[kind]] = best.id;
+  }
+  res.tags = S.tax.tags.filter(e => e.algo !== "none" && (ruleMatch(e, nAll, rawAll) || (e.algo === "auto" && centroidScore("tags", e) > .25))).map(e => e.id);
+  res.date = extractDate(doc._n.text);
+  return res;
+}
+function applyClassification(doc, c, overwrite = false) {
+  for (const k of ["domain", "type", "corr"]) if (c[k] && (overwrite || !doc[k])) doc[k] = c[k];
+  if (c.tags?.length) doc.tags = [...new Set([...(doc.tags || []), ...c.tags])];
+  if (c.date && (overwrite || !doc.docDate)) doc.docDate = c.date;
+}
+
+/* ---------- اقتراح بواسطة Claude ---------- */
+async function aiSuggest(doc) {
+  if (!S.caps.sample) throw new Error("ميزة Claude غير متاحة في هذا العرض");
+  const list = k => S.tax[k].map(e => k === "domains" ? domainPath(e.id) : e.name).join(" | ");
+  const prompt = `أنت مساعد أرشفة لأستاذ جامعي. حلّل الوثيقة التالية واقترح بيانات فهرستها.
+المجالات المتاحة: ${list("domains")}
+الأنواع المتاحة: ${list("types")}
+الجهات المُصدِرة المعروفة: ${list("corrs")}
+الوسوم المتاحة: ${list("tags")}
+
+اسم الملف: ${doc.filename}
+النص (مقتطف):
+"""
+${(doc.text || "").slice(0, 6000)}
+"""
+
+أجب بكائن JSON فقط بهذا الشكل:
+{"title":"عنوان وصفي قصير ودقيق بالعربية","date":"YYYY-MM-DD أو فارغ","type":"اسم من الأنواع المتاحة أو نوع جديد مقترح","correspondent":"اسم الجهة المُصدِرة (من القائمة إن وجدت)","domain":"اسم مجال فرعي من القائمة كما هو مكتوب بعد ›","tags":["وسم1","وسم2"],"summary":"ملخص من جملتين"}`;
+  const r = await S.caps.sample.json(prompt, { modelTier: "default" });
+  if (!r || typeof r !== "object") throw new Error("رد غير مفهوم");
+  return r;
+}
+function findOrNull(kind, name) { if (!name) return null; const n = norm(name).trim(); return S.tax[kind].find(e => norm(e.name).trim() === n) || S.tax[kind].find(e => norm(e.name).includes(n) || n.includes(norm(e.name))) || null; }
+
+/* ============================== البحث ============================== */
+const FIELD_KEYS = { "type": "type", "نوع": "type", "from": "corr", "جهة": "corr", "corr": "corr", "tag": "tag", "وسم": "tag", "domain": "domain", "مجال": "domain", "year": "year", "سنة": "year", "after": "after", "بعد": "after", "before": "before", "قبل": "before", "asn": "asn", "رقم": "asn", "ext": "ext", "صيغة": "ext", "is": "is", "حالة": "is" };
+const FK = {}; for (const k in FIELD_KEYS) FK[norm(k)] = FIELD_KEYS[k];
+function parseQuery(q) {
+  const out = { terms: [], neg: [], fields: [] }; const re = /(-?)(?:([^\s:"]+):)?(?:"([^"]*)"|(\S+))/g; let m;
+  while ((m = re.exec(q))) {
+    const neg = m[1] === "-", key = m[2] ? FK[norm(m[2])] || null : null, val = m[3] ?? m[4] ?? "";
+    if (m[2] && !key) { const t = norm(m[2] + ":" + val).trim(); if (t) (neg ? out.neg : out.terms).push(t); continue; }
+    if (key) { out.fields.push({ key, val: norm(val).trim(), raw: val, neg }); continue; }
+    const t = norm(val).trim(); if (!t) continue; (neg ? out.neg : out.terms).push(t);
+  }
+  return out;
+}
+function fieldOK(doc, f) {
+  const has = (kind, id) => id && norm(entName(kind, id)).includes(f.val);
+  let r;
+  switch (f.key) {
+    case "type": r = has("types", doc.type); break;
+    case "corr": r = has("corrs", doc.corr); break;
+    case "domain": r = !!doc.domain && norm(domainPath(doc.domain)).includes(f.val); break;
+    case "tag": r = (doc.tags || []).some(t => has("tags", t)); break;
+    case "year": r = (doc.docDate || "").startsWith(f.val); break;
+    case "after": r = !!doc.docDate && doc.docDate >= f.val; break;
+    case "before": r = !!doc.docDate && doc.docDate <= f.val; break;
+    case "asn": r = String(doc.asn) === String(+f.val); break;
+    case "ext": r = (doc.ext || "").toLowerCase() === f.val.replace(".", ""); break;
+    case "is": r = (["inbox", "وارد", "جديد"].includes(f.val) && doc.inbox) || (["starred", "مفضله", "مفضل"].includes(f.val) && doc.starred) || (["ocr", "ممسوح"].includes(f.val) && /^ocr/.test(doc.textSource || "")); break;
+    default: r = true;
+  }
+  return f.neg ? !r : r;
+}
+function selOK(doc) {
+  const s = S.sel;
+  switch (s.kind) {
+    case "inbox": return doc.inbox;
+    case "starred": return doc.starred;
+    case "recent": return Date.now() - new Date(doc.added).getTime() < 14 * 864e5;
+    case "untagged": return !doc.domain || !doc.type;
+    case "domain": return domainAndChildren(s.id).includes(doc.domain);
+    case "type": return doc.type === s.id;
+    case "corr": return doc.corr === s.id;
+    case "tag": return (doc.tags || []).includes(s.id);
+    case "year": return (doc.docDate || "").startsWith(s.id);
+    default: return true;
+  }
+}
+function runSearch() {
+  const t0 = performance.now(); const pq = parseQuery(S.q); const hasTerms = pq.terms.length > 0;
+  let rows = [];
+  for (const d of allDocs()) {
+    if (!selOK(d) || !pq.fields.every(f => fieldOK(d, f))) continue;
+    const n = d._n; if (pq.neg.some(t => n.title.includes(t) || n.meta.includes(t) || n.text.includes(t))) continue;
+    let score = 0, ok = true;
+    for (const t of pq.terms) {
+      let s = 0; if (n.title.includes(t)) s += 10; if (n.file.includes(t)) s += 3; if (n.meta.includes(t)) s += 4;
+      if (n.text.includes(t)) { let c = 0, i = -1; while ((i = n.text.indexOf(t, i + 1)) !== -1 && c < 8) c++; s += 1 + c * .3; }
+      if (!s) { ok = false; break; } score += s;
+    }
+    if (ok) rows.push([d, score]);
+  }
+  const key = { "added-desc": d => -new Date(d.added), "date-desc": d => d.docDate ? -Date.parse(d.docDate) : 1e15, "date-asc": d => d.docDate ? Date.parse(d.docDate) : 1e15, "title": d => d.title, "asn": d => d.asn };
+  const k = key[S.sort] || key["added-desc"];
+  rows.sort(hasTerms && S.sort === "relevance" ? (a, b) => b[1] - a[1] : (a, b) => { const x = k(a[0]), y = k(b[0]); return typeof x === "string" ? x.localeCompare(y, "ar") : x - y; });
+  return { rows: rows.map(r => r[0]), ms: performance.now() - t0, pq };
+}
+function snippet(doc, terms) {
+  if (!terms.length || !doc.text) return "";
+  const nt = doc._n.text; let pos = -1, term = "";
+  for (const t of terms) { const i = nt.indexOf(t); if (i !== -1 && (pos === -1 || i < pos)) { pos = i; term = t; } }
+  if (pos === -1) return "";
+  const { n, map } = normWithMap(doc.text.slice(0, Math.min(doc.text.length, (pos + 400) * 2)));
+  const p = n.indexOf(term, Math.max(0, pos - 50)); const at = p === -1 ? n.indexOf(term) : p; if (at === -1) return "";
+  const ws = Math.max(0, at - 70), we = Math.min(n.length, at + 150);
+  const ranges = [];
+  for (const t of terms) { let i = n.indexOf(t, ws); while (i !== -1 && i < we) { ranges.push([map[i], map[Math.min(i + t.length, map.length - 1)]]); i = n.indexOf(t, i + t.length); } }
+  ranges.sort((a, b) => a[0] - b[0]);
+  const os = map[ws], oe = map[Math.min(we, map.length - 1)]; let html = "", cur = os;
+  for (const [a, b] of ranges) { if (a < cur) continue; html += esc(doc.text.slice(cur, a)) + "<mark>" + esc(doc.text.slice(a, b)) + "</mark>"; cur = b; }
+  html += esc(doc.text.slice(cur, oe));
+  return (ws > 0 ? "… " : "") + html.replace(/\s+/g, " ") + (we < n.length ? " …" : "");
+}
+
+/* ============================== الواجهة: الشريط الجانبي ============================== */
+function count(pred) { let c = 0; for (const d of allDocs()) if (pred(d)) c++; return c; }
+function navBtn(kind, id, label, cnt, extra = "") {
+  const on = S.sel.kind === kind && (S.sel.id || null) === (id || null);
+  return `<li><button class="${on ? "on" : ""}" data-sel="${kind}" data-id="${esc(id || "")}">${extra}<span class="lbl">${esc(label)}</span>${cnt !== null ? `<span class="cnt">${cnt}</span>` : ""}</button></li>`;
+}
+const ICONS = {
+  all: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h18v13H3z"/><path d="M5 4h14v3"/></svg>',
+  inbox: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13h5l2 3h4l2-3h5"/><path d="M5 5h14l2 8v6H3v-6z"/></svg>',
+  recent: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>',
+  star: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 4 2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.2 7 19l1.2-5.6L4 9.6 9.6 9z"/></svg>',
+  todo: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h10M4 18h6"/><circle cx="18" cy="17" r="3"/></svg>',
+};
+function renderSide() {
+  const T = S.tax; const docs = allDocs();
+  const inboxN = count(d => d.inbox);
+  let h = `<ul class="nav">
+    ${navBtn("all", null, "كل الوثائق", docs.length, ICONS.all)}
+    ${navBtn("inbox", null, "صندوق الوارد", null, ICONS.inbox).replace("</button>", (inboxN ? `<span class="pill-warn">${inboxN}</span>` : `<span class="cnt">0</span>`) + "</button>")}
+    ${navBtn("recent", null, "أضيفت حديثاً", count(d => Date.now() - new Date(d.added).getTime() < 14 * 864e5), ICONS.recent)}
+    ${navBtn("starred", null, "المفضلة", count(d => d.starred), ICONS.star)}
+    ${navBtn("untagged", null, "بحاجة إلى تصنيف", count(d => !d.domain || !d.type), ICONS.todo)}
+  </ul>`;
+  if (T.views.length) h += `<h3>عروض محفوظة</h3><ul class="nav">${T.views.map(v => `<li><button data-view="${v.id}"><span class="lbl">${esc(v.name)}</span><span class="cnt" data-delview="${v.id}" title="حذف" role="button">×</span></button></li>`).join("")}</ul>`;
+  h += `<h3>المجالات <button data-manage="domains">إدارة</button></h3><ul class="nav">`;
+  for (const p of T.domains.filter(x => !x.parent)) {
+    const ids = domainAndChildren(p.id);
+    h += navBtn("domain", p.id, p.name, count(d => ids.includes(d.domain)), `<span class="dot" style="background:${esc(p.color || "#888")}"></span>`);
+    const kids = T.domains.filter(x => x.parent === p.id);
+    if (kids.length) h += `<li class="sub"><ul class="nav">${kids.map(k => navBtn("domain", k.id, k.name, count(d => d.domain === k.id))).join("")}</ul></li>`;
+  }
+  h += `</ul><h3>نوع الوثيقة <button data-manage="types">إدارة</button></h3><ul class="nav">`;
+  h += T.types.map(t => navBtn("type", t.id, t.name, count(d => d.type === t.id), `<span class="dot" style="background:${esc(t.color || "#888")}"></span>`)).join("");
+  h += `</ul><h3>الجهة المُصدِرة <button data-manage="corrs">إدارة</button></h3><ul class="nav">`;
+  h += T.corrs.map(c => navBtn("corr", c.id, c.name, count(d => d.corr === c.id))).join("");
+  h += `</ul><h3>الوسوم <button data-manage="tags">إدارة</button></h3><div class="tagcloud">`;
+  h += T.tags.map(t => `<button class="${S.sel.kind === "tag" && S.sel.id === t.id ? "on" : ""}" data-sel="tag" data-id="${t.id}">${esc(t.name)} <span class="mono">${count(d => (d.tags || []).includes(t.id))}</span></button>`).join("");
+  const years = [...new Set(docs.map(d => (d.docDate || "").slice(0, 4)).filter(Boolean))].sort().reverse();
+  h += `</div>`;
+  if (years.length) h += `<h3>السنوات</h3><div class="years">${years.map(y => `<button class="mono ${S.sel.kind === "year" && S.sel.id === y ? "on" : ""}" data-sel="year" data-id="${y}">${y}</button>`).join("")}</div>`;
+  const where = S.store?.kind === "folder" ? `<b>التخزين: مجلد «${esc(S.store.name)}».</b> الملفات الأصلية وبطاقات الفهرسة محفوظة فيه، وإن كان في iCloud Drive فهي تتزامن بين أجهزتك.${S.store.pending ? `<br><span style="color:var(--warn)">${S.store.pending} بطاقة لم تُنزَّل بعد من iCloud.</span>` : ""} <button class="btn small ghost" style="height:24px;padding:0 6px" data-act="sync">مزامنة الآن</button>` : S.store?.kind === "cloud" ? `<b>التخزين: حسابك على Claude.</b> البيانات الوصفية والنصوص محفوظة في مساحتك الخاصة، والملفات في مخزن هذه الصفحة.` : `<b>التخزين: هذا المتصفح.</b> الوثائق محفوظة محلياً على جهازك (IndexedDB) ولا تُرفع إلى أي خادم. خذ نسخة احتياطية دورياً من الإعدادات.`;
+  h += `<div class="storage-note">${where}</div>`;
+  $("#side").innerHTML = h;
+}
+
+/* ============================== الواجهة: المنطقة الرئيسية ============================== */
+const PAGE = 60;
+function selTitle() {
+  const s = S.sel;
+  return { all: "كل الوثائق", inbox: "صندوق الوارد", recent: "أضيفت حديثاً", starred: "المفضلة", untagged: "بحاجة إلى تصنيف", domain: domainPath(s.id), type: entName("types", s.id), corr: entName("corrs", s.id), tag: "وسم: " + entName("tags", s.id), year: "سنة " + s.id }[s.kind] || "";
+}
+function renderMain() {
+  const { rows, ms, pq } = runSearch(); const terms = pq.terms;
+  const shown = rows.slice(0, S.page * PAGE);
+  let h = "";
+  if (S.demo) h += `<div class="banner"><p><b>أمثلة توضيحية:</b> هذه وثائق تجريبية لعرض طريقة عمل الأرشيف، وليست محفوظة. ستختفي تلقائياً بمجرد إضافة أول وثيقة لك.</p><button class="btn small primary" data-act="add">أضف وثائقك</button><button class="btn small ghost" data-act="hide-demo">إخفاء الأمثلة</button></div>`;
+  h += `<div class="toolbar"><h2>${esc(selTitle())}</h2><span class="stat num">${rows.length} وثيقة${S.q ? ` · ${ms < 1 ? "<1" : Math.round(ms)} مللي ثانية` : ""}</span><span class="grow"></span>
+    <label class="sr" for="sortSel">الترتيب</label>
+    <select class="sel" id="sortSel">${[["added-desc", "الأحدث إضافة"], ["date-desc", "تاريخ الوثيقة ↓"], ["date-asc", "تاريخ الوثيقة ↑"], ["title", "العنوان"], ["asn", "الرقم الأرشيفي"], ["relevance", "الأكثر صلة"]].map(([v, l]) => `<option value="${v}" ${S.sort === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+    <div class="seg" role="group" aria-label="طريقة العرض">
+      <button data-viewmode="grid" class="${S.view === "grid" ? "on" : ""}" title="بطاقات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></svg>بطاقات</button>
+      <button data-viewmode="list" class="${S.view === "list" ? "on" : ""}" title="قائمة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h16"/></svg>قائمة</button>
+      <button data-viewmode="timeline" class="${S.view === "timeline" ? "on" : ""}" title="خط زمني"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18"/><circle cx="12" cy="7" r="2"/><circle cx="12" cy="16" r="2"/><path d="M14 7h6M4 16h6"/></svg>زمني</button>
+    </div></div>`;
+  const chips = [];
+  if (S.sel.kind !== "all") chips.push(`<span class="chip">${esc(selTitle())}<button data-act="clear-sel" aria-label="إزالة">×</button></span>`);
+  if (S.q) chips.push(`<span class="chip">بحث: «${esc(S.q)}»<button data-act="clear-q" aria-label="مسح البحث">×</button></span><button class="btn small ghost" data-act="save-view">حفظ كعرض</button>`);
+  if (chips.length) h += `<div class="chips">${chips.join("")}</div>`;
+  if (!rows.length) {
+    h += allDocs().length ? `<div class="empty"><h3>لا توجد نتائج</h3><p>جرّب كلمة أقصر أو احذف أحد المرشحات. البحث يتجاهل الهمزات والتشكيل، فـ«أطروحة» و«اطروحه» سواء.</p></div>`
+      : `<div class="empty"><h3>الأرشيف فارغ</h3><p>اسحب ملفات PDF أو صوراً ممسوحة ضوئياً أو ملفات Word إلى هذه النافذة، أو استعمل زر «إضافة وثائق».<br>سيُستخرج النص تلقائياً ويُصنّف كل ملف حسب قواعدك.</p><button class="btn primary" data-act="add">إضافة وثائق</button> <button class="btn" data-act="show-demo">عرض أمثلة</button></div>`;
+  } else if (S.view === "list") {
+    h += `<div class="tablewrap"><table class="list"><thead><tr><th></th><th>الرقم</th><th>العنوان</th><th>النوع</th><th>الجهة</th><th>التاريخ</th><th>المجال</th><th>الوسوم</th><th>صفحات</th></tr></thead><tbody>`;
+    h += shown.map(d => `<tr data-open="${d.id}"><td>${d.thumb ? `<img class="mini" src="${d.thumb}" alt="">` : `<span class="mini"></span>`}</td><td class="mono">${asnStr(d.asn)}</td><td><div class="t">${esc(d.title)}</div>${terms.length ? `<div class="snip" style="-webkit-line-clamp:1">${snippet(d, terms)}</div>` : ""}</td><td><span class="tag" style="background:${esc(typeColor(d))};color:#fff">${esc(entName("types", d.type) || "—")}</span></td><td>${esc(entName("corrs", d.corr) || "—")}</td><td class="mono" style="white-space:nowrap">${esc(d.docDate || "—")}</td><td>${esc(domainPath(d.domain) || "—")}</td><td>${(d.tags || []).map(t => `<span class="tag">${esc(entName("tags", t))}</span>`).join(" ")}</td><td class="mono">${d.pages || "—"}</td></tr>`).join("");
+    h += `</tbody></table></div>`;
+  } else if (S.view === "timeline") {
+    const groups = {};
+    for (const d of shown) { const y = (d.docDate || "").slice(0, 4) || "بدون تاريخ"; const m = (d.docDate || "").slice(5, 7) || "00"; ((groups[y] ||= {})[m] ||= []).push(d); }
+    h += `<div class="timeline">` + Object.keys(groups).sort().reverse().map(y => `<section class="tl-year"><h4 class="mono">${esc(y)}</h4><div class="tl-months">${Object.keys(groups[y]).sort().reverse().map(m => `<div class="tl-month"><h5>${m === "00" ? "—" : AR_MONTHS[+m - 1]}</h5><div class="tl-items">${groups[y][m].map(d => `<button class="tl-item" data-open="${d.id}">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span><span class="tt">${esc(d.title)}</span><span class="ts">${esc(entName("types", d.type) || "")}${d.corr ? " · " + esc(entName("corrs", d.corr)) : ""}</span></span></button>`).join("")}</div></div>`).join("")}</div></section>`).join("") + `</div>`;
+  } else {
+    h += `<div class="grid">` + shown.map(d => card(d, terms)).join("") + `</div>`;
+  }
+  if (rows.length > shown.length) h += `<div class="more"><button class="btn" data-act="more">عرض المزيد (${rows.length - shown.length})</button></div>`;
+  $("#main").innerHTML = h;
+}
+function card(d, terms) {
+  const sn = terms.length ? snippet(d, terms) : "";
+  return `<button class="card" data-open="${d.id}">
+    <div class="thumb">${d.thumb ? `<img src="${d.thumb}" alt="" loading="lazy">` : ""}
+      ${d.type ? `<span class="typeband" style="background:${esc(typeColor(d))}">${esc(entName("types", d.type))}</span>` : ""}
+      <span class="flags">${d.inbox ? `<span class="flag inbox">جديد</span>` : ""}${d.starred ? `<span class="flag star">★</span>` : ""}${/^ocr/.test(d.textSource || "") ? `<span class="flag" title="نص مستخرج بالتعرف الضوئي">OCR</span>` : ""}</span>
+      <span class="asn mono">${asnStr(d.asn)}</span></div>
+    <div class="body"><div class="title">${esc(d.title)}</div>
+      <div class="sub">${d.corr ? `<span>${esc(entName("corrs", d.corr))}</span><span class="sep">·</span>` : ""}<span class="num">${esc(fmtDate(d.docDate))}</span></div>
+      ${sn ? `<div class="snip">${sn}</div>` : ""}
+      <div class="tags">${d.domain ? `<span class="tag" style="color:${esc(ent("domains", ent("domains", d.domain)?.parent || d.domain)?.color || "inherit")}">${esc(entName("domains", d.domain))}</span>` : ""}${(d.tags || []).slice(0, 3).map(t => `<span class="tag">${esc(entName("tags", t))}</span>`).join("")}</div>
+    </div></button>`;
+}
+function render() { renderSide(); renderMain(); if (S.open) renderDrawer(); renderQueue(); }
+
+/* ============================== لوحة الوثيقة ============================== */
+const opts = (kind, val, empty = "— غير محدد —") => `<option value="">${empty}</option>` + S.tax[kind].map(e => `<option value="${e.id}" ${e.id === val ? "selected" : ""}>${esc(kind === "domains" ? domainPath(e.id) : e.name)}</option>`).join("");
+const SRC = { pdf: "طبقة نص PDF", "ocr-claude": "تعرف ضوئي بواسطة Claude", "ocr-tesseract": "تعرف ضوئي محلي (Tesseract)", docx: "ملف Word", text: "ملف نصي", none: "لا يوجد نص — يمكن إعادة التعرف الضوئي" };
+let previewToken = 0;
+function renderDrawer() {
+  const d = allDocs().find(x => x.id === S.open); if (!d) { closeDrawer(); return; }
+  let layer = $("#drawerLayer");
+  const first = !layer;
+  if (first) { layer = document.createElement("div"); layer.id = "drawerLayer"; layer.innerHTML = `<div class="scrim" data-act="close"></div><section class="drawer" role="dialog" aria-modal="true" aria-label="تفاصيل الوثيقة"></section>`; $("#layer").appendChild(layer); }
+  const dr = $(".drawer", layer); const scrollMeta = $(".meta", dr)?.scrollTop || 0;
+  const sims = S.tab === "similar" ? similar(d) : [];
+  const sug = S.suggestions?.[d.id];
+  dr.innerHTML = `<div class="dr-head">
+      <button class="btn ghost icon-btn" data-act="close" aria-label="إغلاق"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6"/></svg></button>
+      <span class="mono" style="color:var(--muted)">ASN ${asnStr(d.asn)}</span>
+      <h2 title="${esc(d.title)}">${esc(d.title)}</h2>
+      <button class="btn small ghost" data-act="star">${d.starred ? "★ في المفضلة" : "☆ أضف للمفضلة"}</button>
+      ${d.file ? `<button class="btn small" data-act="open-file">فتح الأصل</button><button class="btn small ghost" data-act="download">تنزيل</button>` : ""}
+      <button class="btn small ghost danger" data-act="delete">حذف</button>
+    </div>
+    ${S.confirmDelete === d.id ? `<div class="confirm" style="margin:8px 16px">حذف هذه الوثيقة وملفها نهائياً؟ <button class="btn small danger" data-act="delete-yes">نعم، احذف</button><button class="btn small ghost" data-act="delete-no">إلغاء</button></div>` : ""}
+    <div class="dr-body"><div class="preview" id="preview"><p class="note">جارٍ تحضير المعاينة…</p></div>
+    <div class="meta"><div class="tabs" role="tablist">
+      ${[["info", "الفهرسة"], ["text", "النص المستخرج"], ["similar", "وثائق مشابهة"]].map(([k, l]) => `<button role="tab" class="${S.tab === k ? "on" : ""}" data-tab="${k}">${l}</button>`).join("")}
+    </div>
+    ${S.tab === "info" ? `<div class="pane">
+      ${d.inbox ? `<div class="confirm" style="background:var(--warn-bg)">وثيقة جديدة في صندوق الوارد. راجع الفهرسة ثم <button class="btn small" data-act="reviewed">تمت المراجعة ✓</button></div>` : ""}
+      <div class="field"><label for="f-title">العنوان</label><input id="f-title" data-f="title" value="${esc(d.title)}"></div>
+      <div class="row2"><div class="field"><label for="f-date">تاريخ الوثيقة</label><input id="f-date" type="date" data-f="docDate" value="${esc(d.docDate || "")}"></div>
+        <div class="field"><label for="f-type">نوع الوثيقة</label><select id="f-type" data-f="type">${opts("types", d.type)}</select></div></div>
+      <div class="field"><label for="f-corr">الجهة المُصدِرة</label><select id="f-corr" data-f="corr">${opts("corrs", d.corr)}</select></div>
+      <div class="field"><label for="f-domain">المجال</label><select id="f-domain" data-f="domain">${opts("domains", d.domain)}</select></div>
+      <div class="field"><label for="f-tagin">الوسوم</label><div class="tagbox">${(d.tags || []).map(t => `<span class="tg">${esc(entName("tags", t))}<button data-rmtag="${t}" aria-label="إزالة">×</button></span>`).join("")}<input id="f-tagin" list="taglist" placeholder="أضف وسماً واضغط Enter"><datalist id="taglist">${S.tax.tags.map(t => `<option value="${esc(t.name)}">`).join("")}</datalist></div></div>
+      <div class="field"><label for="f-notes">ملاحظات</label><textarea id="f-notes" data-f="notes" placeholder="مكان النسخة الورقية، ملاحظات المتابعة…">${esc(d.notes || "")}</textarea></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn small" data-act="reclassify">إعادة التصنيف التلقائي</button>
+        ${S.caps.sample ? `<button class="btn small primary" data-act="ai" ${S.aiBusy[d.id] ? "disabled" : ""}>${S.aiBusy[d.id] ? "Claude يحلل الوثيقة…" : "اقتراح ذكي بواسطة Claude"}</button>` : ""}
+        ${d.file && /pdf|image/.test(d.mime) ? `<button class="btn small ghost" data-act="reocr">إعادة التعرف الضوئي</button>` : ""}
+      </div>
+      ${sug ? suggestBox(d, sug) : ""}
+      ${d.summary ? `<div class="field"><label>ملخص</label><div class="textview" style="white-space:normal">${esc(d.summary)}</div></div>` : ""}
+      <dl class="facts"><dt>اسم الملف</dt><dd>${esc(d.filename)}</dd><dt>الحجم</dt><dd class="num">${fmtSize(d.size)} · ${d.pages || 1} صفحة</dd><dt>مصدر النص</dt><dd>${esc(SRC[d.textSource] || "—")}</dd><dt>أُضيفت</dt><dd>${esc(fmtDate(d.added.slice(0, 10)))}</dd><dt>البصمة</dt><dd class="mono" style="font-size:11px">${esc((d.hash || "").slice(0, 16)) || "—"}</dd></dl>
+    </div>` : ""}
+    ${S.tab === "text" ? `<div class="pane"><p class="help" style="margin:0">${esc(SRC[d.textSource] || "")} · ${(d.text || "").length.toLocaleString("ar")} حرف. هذا النص هو ما يبحث فيه النظام.</p><div class="textview">${d.text ? (S.q ? highlightAll(d.text, parseQuery(S.q).terms) : esc(d.text)) : "لا يوجد نص مستخرج."}</div></div>` : ""}
+    ${S.tab === "similar" ? `<div class="pane"><p class="help" style="margin:0">وثائق قريبة في المحتوى (تشابه المصطلحات TF‑IDF)، مفيدة لاكتشاف الوثائق المرتبطة أو المكررة.</p><div class="simlist">${sims.length ? sims.map(([s, sc]) => `<button class="sim" data-open="${s.id}">${s.thumb ? `<img src="${s.thumb}" alt="">` : ""}<span><b style="font-size:13px">${esc(s.title)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(entName("types", s.type) || "")} · ${esc(fmtDate(s.docDate))}</span></span><span class="score">${Math.round(sc * 100)}%</span></button>`).join("") : `<p class="note">لا توجد وثائق مشابهة بما يكفي.</p>`}</div></div>` : ""}
+    </div></div>`;
+  const m = $(".meta", dr); if (m) m.scrollTop = scrollMeta;
+  if (first || S._previewFor !== d.id) { S._previewFor = d.id; renderPreview(d); } else { const pv = $("#preview"); if (S._previewNode) pv.replaceWith(S._previewNode); }
+}
+function suggestBox(d, s) {
+  const items = [];
+  if (s.title) items.push(["العنوان", s.title]);
+  if (s.date) items.push(["التاريخ", s.date]);
+  if (s.type) items.push(["النوع", s.type + (findOrNull("types", s.type) ? "" : " (جديد)")]);
+  if (s.correspondent) items.push(["الجهة", s.correspondent + (findOrNull("corrs", s.correspondent) ? "" : " (جديدة)")]);
+  if (s.domain) items.push(["المجال", s.domain]);
+  if (s.tags?.length) items.push(["الوسوم", s.tags.join("، ")]);
+  return `<div class="suggest"><h4>اقتراحات Claude</h4><ul>${items.map(([k, v]) => `<li><span>${k}</span><span>${esc(v)}</span></li>`).join("")}</ul>${s.summary ? `<div style="color:var(--muted)">${esc(s.summary)}</div>` : ""}<div style="display:flex;gap:8px"><button class="btn small primary" data-act="ai-apply">تطبيق الاقتراحات</button><button class="btn small ghost" data-act="ai-dismiss">تجاهل</button></div></div>`;
+}
+function highlightAll(text, terms) {
+  if (!terms.length) return esc(text);
+  const { n, map } = normWithMap(text); const ranges = [];
+  for (const t of terms) { let i = n.indexOf(t); while (i !== -1) { ranges.push([map[i], map[i + t.length]]); i = n.indexOf(t, i + t.length); } }
+  ranges.sort((a, b) => a[0] - b[0]); let h = "", cur = 0;
+  for (const [a, b] of ranges) { if (a < cur) continue; h += esc(text.slice(cur, a)) + "<mark>" + esc(text.slice(a, b)) + "</mark>"; cur = b; }
+  return h + esc(text.slice(cur));
+}
+async function renderPreview(d) {
+  const tok = ++previewToken; const pv = $("#preview");
+  const done = node => { if (tok !== previewToken) return; S._previewNode = node; const cur = $("#preview"); if (cur) cur.replaceWith(node); };
+  const box = document.createElement("div"); box.className = "preview"; box.id = "preview";
+  if (d.demo || !d.file) {
+    box.innerHTML = (d.thumb ? `<img class="page" src="${d.thumb}" alt="الصفحة الأولى">` : "") + `<p class="note">${d.demo ? "وثيقة تجريبية — هذه صورة مصغّرة مولّدة. وثائقك الحقيقية تُعرض هنا صفحةً صفحة." : "الملف الأصلي غير متوفر على هذا الجهاز."}</p>`;
+    return done(box);
+  }
+  try {
+    const blob = await S.store.getFile(d.file); if (tok !== previewToken) return;
+    if (!blob) throw new Error("الملف غير موجود على هذا الجهاز");
+    if (/pdf/.test(d.mime)) {
+      const pdfjs = await getPdfjs(); const pdf = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise;
+      const show = async (from, to) => {
+        for (let i = from; i <= to; i++) { if (tok !== previewToken) return; const c = await renderPdfPage(pdf, i, 1.5); c.setAttribute("aria-label", "صفحة " + i); box.insertBefore(c, box.querySelector(".pv-more")); }
+      };
+      const lim = Math.min(pdf.numPages, 4); done(box); await show(1, lim);
+      if (pdf.numPages > lim) { const b = document.createElement("button"); b.className = "btn pv-more"; b.textContent = `عرض بقية الصفحات (${pdf.numPages - lim})`; b.onclick = async () => { b.disabled = true; await show(lim + 1, pdf.numPages); b.remove(); }; box.appendChild(b); }
+    } else if (/image/.test(d.mime)) {
+      const img = document.createElement("img"); img.className = "page"; img.src = URL.createObjectURL(blob); img.alt = d.title; box.appendChild(img); done(box);
+    } else {
+      box.innerHTML = `<div class="textdoc">${esc(d.text || "")}</div>`; done(box);
+    }
+  } catch (e) { box.innerHTML = `<p class="note">تعذر عرض المعاينة: ${esc(e.message || e)}</p>` + (d.thumb ? `<img class="page" src="${d.thumb}" alt="">` : ""); done(box); }
+}
+function openDoc(id) { if (S.open !== id) { S.tab = "info"; S.confirmDelete = null; } S.open = id; renderDrawer(); }
+function closeDrawer() { setTimeout(() => { if (S.updatePending && !busy()) applyUpdate(); }, 600); S.open = null; previewToken++; S._previewFor = null; S._previewNode = null; $("#drawerLayer")?.remove(); }
+
+/* ============================== الحفظ ============================== */
+async function persistDoc(d) {
+  indexDoc(d); invalidateCorpus();
+  if (d.demo) return;
+  try { await S.store.saveDoc(clean(d)); } catch (e) { console.error(e); toast("تعذر الحفظ: " + (e.message || e.code || e)); }
+}
+async function persistTax() { allDocs().forEach(indexDoc); invalidateCorpus(); try { await S.store.saveTax(S.tax); } catch (e) { console.error(e); toast("تعذر حفظ الإعدادات"); } }
+const saveField = debounce(async (d) => { await persistDoc(d); renderSide(); renderMain(); }, 500);
+
+/* ============================== الاستيراد ============================== */
+async function sha256(buf) { try { const h = await crypto.subtle.digest("SHA-256", buf); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, "0")).join(""); } catch (e) { let h = 0; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i += 7) h = (h * 31 + a[i]) | 0; return "w" + (h >>> 0).toString(16) + a.length.toString(16); } }
+function guessMime(f) { if (f.type) return f.type; const e = f.name.split(".").pop().toLowerCase(); return { pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif", txt: "text/plain", md: "text/markdown", csv: "text/csv", docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", html: "text/html", htm: "text/html", tif: "image/tiff", tiff: "image/tiff", bmp: "image/bmp" }[e] || "application/octet-stream"; }
+function titleFromName(n) { return n.replace(/\.[^.]+$/, "").replace(/[_\-]+/g, " ").replace(/\s+/g, " ").trim(); }
+const MAX_TEXT = 70000; // يبقي كل سجل تحت حد 256 ك.ب في التخزين السحابي
+async function importFiles(files) {
+  files = [...files]; if (!files.length) return;
+  if (S.demo) { S.demo = false; DEMO_DOCS = []; invalidateCorpus(); }
+  if (S.store.kind === "folder") await syncFromFolder(true);
+  S.tax.nextAsn = Math.max(S.tax.nextAsn, S.docs.reduce((m, d) => Math.max(m, d.asn || 0), 0) + 1);
+  const items = files.map(f => ({ id: uid(), name: f.name, file: f, status: "في الانتظار", p: 0, state: "wait" }));
+  S.queue.push(...items); renderQueue(); render();
+  for (const it of items) {
+    const report = (msg, p) => { it.status = msg; if (p !== undefined) it.p = p; renderQueue(); };
+    try {
+      it.state = "run"; const f = it.file; const mime = guessMime(f); const ext = f.name.split(".").pop().toLowerCase();
+      report("قراءة الملف…", .02); const buf = await f.arrayBuffer(); const hash = await sha256(buf.slice(0));
+      const dup = S.docs.find(d => d.hash === hash);
+      if (dup) { it.state = "err"; report(`مكرر: موجود مسبقاً برقم ${asnStr(dup.asn)}`, 1); it.dupOf = dup.id; continue; }
+      let r;
+      if (mime === "application/pdf") r = await extractPDF(buf.slice(0), report);
+      else if (/^image\//.test(mime)) {
+        if (/tiff/.test(mime)) throw new Error("صيغة TIFF غير مدعومة في المتصفح، حوّلها إلى PDF أو PNG");
+        r = await extractImage(f, report);
+      }
+      else if (/wordprocessingml/.test(mime)) r = await extractDocx(buf.slice(0));
+      else if (/^text\//.test(mime)) { let t = await f.text(); if (/html/.test(mime)) { const dd = new DOMParser().parseFromString(t, "text/html"); t = dd.body.innerText || dd.body.textContent; } r = { text: t, pages: Math.max(1, Math.round(t.length / 2800)), source: "text" }; }
+      else throw new Error("صيغة غير مدعومة: " + ext);
+      report("التصنيف…", .92);
+      const doc = { id: uid(), asn: S.tax.nextAsn++, title: titleFromName(f.name), filename: f.name, mime, ext, size: f.size, hash, added: new Date().toISOString(), docDate: "", type: null, corr: null, domain: null, tags: [], notes: "", starred: false, inbox: true, pages: r.pages, text: (r.text || "").slice(0, MAX_TEXT), textSource: r.source, thumb: r.thumb || "", file: null };
+      if (!doc.thumb) { doc.thumb = makeThumbFromText(doc.title, [(doc.text || "").slice(0, 160)], "#4E5A66", ext.toUpperCase()); }
+      indexDoc(doc); S.docs.push(doc); invalidateCorpus();
+      applyClassification(doc, classify(doc));
+      if (doc.type && !r.thumb) doc.thumb = makeThumbFromText(doc.title, [(doc.text || "").slice(0, 160)], typeColor(doc), entName("types", doc.type));
+      report("حفظ الملف…", .96);
+      const blob = new Blob([buf], { type: mime === "text/html" ? "text/plain" : mime });
+      doc.file = await S.store.putFile(doc.id, blob, f.name, doc);
+      await persistDoc(doc); await S.store.saveTax(S.tax);
+      if (S.tax.settings.autoAI && S.caps.sample && doc.text) { report("اقتراح بواسطة Claude…", .98); try { const s = await aiSuggest(doc); applyAI(doc, s, false); await persistDoc(doc); } catch (e) { console.warn(e); } }
+      it.state = "done"; it.docId = doc.id; report(`تمت الأرشفة برقم ${asnStr(doc.asn)}${doc.textSource === "none" ? " — بدون نص" : ""}`, 1);
+    } catch (e) { console.error(e); it.state = "err"; report("خطأ: " + (e.message || e), 1); }
+    render();
+  }
+  if (S.updatePending && !busy()) applyUpdate();
+}
+function applyAI(doc, s, overwrite = true) {
+  const mk = (kind, name, extra = {}) => { if (!name) return null; let e = findOrNull(kind, name); if (!e) { e = E(String(name).slice(0, 80), "", "auto", extra); S.tax[kind].push(e); } return e.id; };
+  if (s.title && (overwrite || doc.title === titleFromName(doc.filename))) doc.title = String(s.title).slice(0, 200);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s.date || "") && (overwrite || !doc.docDate)) doc.docDate = s.date;
+  if (s.type && (overwrite || !doc.type)) doc.type = mk("types", s.type, { color: PALETTE[S.tax.types.length % PALETTE.length] });
+  if (s.correspondent && (overwrite || !doc.corr)) doc.corr = mk("corrs", s.correspondent);
+  if (s.domain && (overwrite || !doc.domain)) { const dm = findOrNull("domains", String(s.domain).split("›").pop().trim()); if (dm) doc.domain = dm.id; }
+  if (Array.isArray(s.tags)) doc.tags = [...new Set([...(doc.tags || []), ...s.tags.slice(0, 6).map(t => mk("tags", t)).filter(Boolean)])];
+  if (s.summary) doc.summary = String(s.summary).slice(0, 600);
+  persistTax();
+}
+function renderQueue() {
+  let q = $("#queue");
+  if (!S.queue.length) { q?.remove(); return; }
+  if (!q) { q = document.createElement("div"); q.id = "queue"; q.className = "queue"; q.setAttribute("aria-live", "polite"); document.body.appendChild(q); }
+  const running = S.queue.filter(i => i.state === "run" || i.state === "wait").length;
+  q.innerHTML = `<header><span>${running ? `معالجة الوثائق (${running} متبقية)` : "اكتملت المعالجة"}</span>${running ? "" : `<button class="btn small ghost" data-act="clear-queue">إغلاق</button>`}</header><ul>${S.queue.map(i => `<li><div class="qn"><span>${esc(i.name)}</span>${i.docId ? `<button class="btn small ghost" style="height:22px" data-open="${i.docId}">فتح</button>` : i.dupOf ? `<button class="btn small ghost" style="height:22px" data-open="${i.dupOf}">الأصل</button>` : ""}</div><div class="bar"><i style="width:${Math.round(i.p * 100)}%"></i></div><span class="qs ${i.state === "err" ? "err" : i.state === "done" ? "done" : ""}">${esc(i.status)}</span></li>`).join("")}</ul>`;
+}
+
+/* ============================== الإعدادات والتصنيفات ============================== */
+const ALGOS = [["auto", "تلقائي (يتعلّم)"], ["any", "أي كلمة"], ["all", "كل الكلمات"], ["exact", "عبارة مطابقة"], ["regex", "تعبير نمطي"], ["none", "بدون"]];
+const KIND_LABEL = { domains: "المجالات", types: "أنواع الوثائق", corrs: "الجهات المُصدِرة", tags: "الوسوم" };
+function openModal(html) { closeModal(); const m = document.createElement("div"); m.id = "modalLayer"; m.innerHTML = `<div class="scrim" data-act="close-modal"></div><div class="modal"><div class="box" role="dialog" aria-modal="true">${html}</div></div>`; $("#layer").appendChild(m); m.querySelector(".modal").addEventListener("click", e => { if (e.target.classList.contains("modal")) closeModal(); }); }
+function closeModal() { $("#modalLayer")?.remove(); }
+function openSettings(tab = "domains") {
+  S.setTab = tab;
+  const tabs = [["domains", "المجالات"], ["types", "الأنواع"], ["corrs", "الجهات"], ["tags", "الوسوم"], ["general", "عام والنسخ الاحتياطي"]];
+  let body = "";
+  if (tab === "general") {
+    const st = S.tax.settings; const claude = S.caps.sample && S.caps.imgs;
+    const sk = S.store?.kind;
+    body = `<div class="setting"><p>مكان التخزين<small>${sk === "folder" ? `مجلد «${esc(S.store.name)}». اختيار مجلد آخر يفتح الأرشيف الموجود فيه، أو يبدأ أرشيفاً جديداً إن كان فارغاً.` : sk === "cloud" ? "حسابك على Claude." : "داخل هذا المتصفح فقط. انقل الأرشيف إلى مجلد في iCloud Drive لمزامنته بين أجهزة الماك."}</small></p>
+        ${sk === "folder" ? `<button class="btn" data-act="pick-folder">فتح مجلد آخر…</button>` : sk === "local" && FS_OK ? `<button class="btn primary" data-act="move-to-folder">نقل الأرشيف إلى مجلد…</button>` : ""}</div>
+      <div class="setting"><p>محرك التعرف الضوئي (OCR) للملفات الممسوحة<small>${claude ? "Claude متاح في هذا العرض: دقة عالية للعربية المطبوعة والمكتوبة بخط اليد." : (VENDOR ? "يُستخدم Tesseract على جهازك، ونماذج العربية والفرنسية والإنجليزية مضمّنة في التطبيق فيعمل دون إنترنت." : "Claude غير متاح هنا؛ سيُستخدم Tesseract محلياً (يحمّل نماذج اللغة من الإنترنت أول مرة).")}</small></p>
+      <select class="sel" id="set-ocr">${[["auto", "تلقائي"], ["claude", "Claude فقط"], ["tesseract", "Tesseract فقط"], ["off", "إيقاف"]].map(([v, l]) => `<option value="${v}" ${st.ocr === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
+      <div class="setting"><p>لغات Tesseract<small>رموز مفصولة بعلامة +، مثل ara+fra+eng</small></p><input class="sel" id="set-langs" value="${esc(st.ocrLangs)}" style="width:150px;direction:ltr"></div>
+      <div class="setting"><p>الحد الأقصى لصفحات التعرف الضوئي لكل ملف</p><input class="sel" id="set-pages" type="number" min="1" max="200" value="${st.ocrPages}" style="width:90px"></div>
+      ${S.caps.sample ? `<div class="setting"><p>اقتراح ذكي تلقائي عند الاستيراد<small>يطلب من Claude عنواناً ونوعاً وجهة ووسوماً لكل وثيقة جديدة.</small></p><input type="checkbox" id="set-ai" ${st.autoAI ? "checked" : ""} style="width:20px;height:20px"></div>` : ""}
+      <div class="setting"><p>نسخة احتياطية كاملة<small>ملف JSON واحد يضم التصنيفات والبيانات الوصفية والنصوص والملفات الأصلية.</small></p><button class="btn" data-act="export">تصدير نسخة احتياطية</button></div>
+      <div class="setting"><p>استرجاع نسخة احتياطية<small>تُدمج الوثائق مع الأرشيف الحالي، وتُتجاهل المكررة.</small></p><label class="btn" for="importBackup" style="cursor:pointer">استيراد…</label><input type="file" id="importBackup" accept=".json,application/json" hidden></div>
+      <div class="setting"><p>الإصدار<small>يتحدّث التطبيق تلقائياً عند نشر نسخة جديدة.</small></p><span class="mono">${APP_VERSION}</span></div>
+      <div class="setting"><p>تصدير الفهرس كجدول CSV<small>للطباعة أو الفتح في Excel: الرقم والعنوان والنوع والجهة والتاريخ والمجال والوسوم.</small></p><button class="btn" data-act="export-csv">تصدير CSV</button></div>`;
+  } else {
+    const list = S.tax[tab];
+    body = `<p class="help">${tab === "domains" ? "رتّب مجالات نشاطك في شجرة من مستويين (مجال رئيسي ← مجال فرعي). " : ""}لكل عنصر <b>قاعدة مطابقة</b> تُطبَّق تلقائياً على كل وثيقة جديدة: اكتب كلمات تظهر عادة في نص الوثيقة. في «أي كلمة» و«كل الكلمات» افصل بمسافات، وفي «تلقائي» افصل العبارات بفاصلة (مثل: <code>محضر، المجلس العلمي</code>). خوارزمية <b>«تلقائي»</b> تتعلم أيضاً من الوثائق التي صنّفتها يدوياً، فتتحسن الاقتراحات كلما صنّفت أكثر. البحث يتجاهل الهمزات والتشكيل والتاء المربوطة.</p>
+    <div style="overflow-x:auto"><table class="ent-table"><thead><tr>${tab === "domains" || tab === "types" ? "<th>لون</th>" : ""}<th>الاسم</th>${tab === "domains" ? "<th>يتبع</th>" : ""}<th>كلمات المطابقة</th><th>الخوارزمية</th><th>وثائق</th><th></th></tr></thead><tbody>
+    ${list.map(e => `<tr data-ent="${e.id}">${tab === "domains" || tab === "types" ? `<td><input type="color" data-ef="color" value="${esc(e.color || "#4E5A66")}" aria-label="لون"></td>` : ""}<td><input data-ef="name" value="${esc(e.name)}" aria-label="الاسم"></td>${tab === "domains" ? `<td><select data-ef="parent" aria-label="المجال الأب"><option value="">— رئيسي —</option>${S.tax.domains.filter(x => !x.parent && x.id !== e.id).map(x => `<option value="${x.id}" ${e.parent === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select></td>` : ""}<td><input data-ef="match" value="${esc(e.match || "")}" aria-label="كلمات المطابقة"></td><td><select data-ef="algo" aria-label="الخوارزمية">${ALGOS.map(([v, l]) => `<option value="${v}" ${e.algo === v ? "selected" : ""}>${l}</option>`).join("")}</select></td><td class="mono">${countUse(tab, e.id)}</td><td><button class="btn small ghost danger" data-delent="${e.id}" aria-label="حذف">حذف</button></td></tr>`).join("")}
+    </tbody></table></div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" data-act="add-ent">+ إضافة عنصر</button><button class="btn ghost" data-act="apply-rules">تطبيق القواعد على الوثائق غير المصنفة</button></div>`;
+  }
+  openModal(`<header><h2>الإعدادات والتصنيفات</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header>
+    <div class="tabs" style="position:static">${tabs.map(([k, l]) => `<button class="${tab === k ? "on" : ""}" data-settab="${k}">${l}</button>`).join("")}</div>
+    <div class="content">${body}</div>`);
+}
+function countUse(kind, id) { const f = { domains: "domain", types: "type", corrs: "corr" }[kind]; return count(d => kind === "tags" ? (d.tags || []).includes(id) : d[f] === id); }
+function openSyntax() {
+  openModal(`<header><h2>صيغ البحث</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content"><p class="help" style="line-height:2.1">
+  اكتب أي كلمات للبحث في العنوان واسم الملف والبيانات الوصفية والنص الكامل (بما فيه نص الوثائق الممسوحة ضوئياً). يجب أن تظهر كل الكلمات.<br>
+  <code>"الأمن الطاقوي"</code> عبارة كما هي · <code>-مسودة</code> استبعاد كلمة<br>
+  <code>نوع:محضر</code> أو <code>type:</code> · <code>جهة:الوزارة</code> أو <code>from:</code> · <code>مجال:الإشراف</code> أو <code>domain:</code> · <code>وسم:للترقية</code> أو <code>tag:</code><br>
+  <code>سنة:2025</code> · <code>بعد:2024-09-01</code> · <code>قبل:2025-06-30</code> · <code>رقم:42</code> (الرقم الأرشيفي) · <code>صيغة:pdf</code><br>
+  <code>حالة:وارد</code> · <code>حالة:مفضلة</code> · <code>حالة:ممسوح</code> (الوثائق المستخرجة بالتعرف الضوئي)<br>
+  مثال: <code>شهادة ملتقى وسم:للترقية بعد:2023-01-01</code></p>
+  <p class="help">اختصارات: <span class="kbd">/</span> للانتقال إلى البحث · <span class="kbd">Esc</span> لإغلاق اللوحة.</p></div>`);
+}
+
+/* ---------- النسخ الاحتياطي ---------- */
+function b64(buf) { let s = ""; const a = new Uint8Array(buf); for (let i = 0; i < a.length; i += 0x8000) s += String.fromCharCode.apply(null, a.subarray(i, i + 0x8000)); return btoa(s); }
+function unb64(s) { const b = atob(s); const a = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) a[i] = b.charCodeAt(i); return a; }
+async function saveFile(filename, blob) {
+  if (S.caps.downloads) { try { await S.caps.downloads.save({ filename, data: blob }); return; } catch (e) { if (e?.code === "declined" || e?.code === "cancelled") return; console.warn(e); } }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+async function exportBackup() {
+  toast("جارٍ تجهيز النسخة الاحتياطية…", 6000);
+  const out = { app: "arshifi", version: 1, exported: new Date().toISOString(), tax: S.tax, docs: [] };
+  for (const d of S.docs) { const o = clean(d); try { const blob = await S.store.getFile(d.file); if (blob) o.fileData = b64(await blob.arrayBuffer()); } catch (e) {} out.docs.push(o); }
+  await saveFile(`arshifi-backup-${new Date().toISOString().slice(0, 10)}.json`, new Blob([JSON.stringify(out)], { type: "application/json" }));
+}
+async function importBackup(file) {
+  try {
+    const data = JSON.parse(await file.text()); if (data.app !== "arshifi") throw new Error("ليس ملف نسخة احتياطية لأرشيفي");
+    if (S.demo) { S.demo = false; DEMO_DOCS = []; }
+    for (const k of ["domains", "types", "corrs", "tags", "views"]) for (const e of data.tax[k] || []) if (!S.tax[k].some(x => x.id === e.id)) S.tax[k].push(e);
+    let n = 0;
+    for (const d of data.docs) {
+      if (S.docs.some(x => x.hash === d.hash || x.id === d.id)) continue;
+      const fd = d.fileData; delete d.fileData; d.asn = S.tax.nextAsn++;
+      if (fd) d.file = await S.store.putFile(d.id, new Blob([unb64(fd)], { type: d.mime }), d.filename, d); else d.file = null;
+      indexDoc(d); S.docs.push(d); await S.store.saveDoc(clean(d)); n++;
+    }
+    await persistTax(); closeModal(); render(); toast(`تم استرجاع ${n} وثيقة`);
+  } catch (e) { toast("تعذر الاسترجاع: " + (e.message || e)); }
+}
+function exportCSV() {
+  const rows = [["الرقم", "العنوان", "النوع", "الجهة", "التاريخ", "المجال", "الوسوم", "الملف", "ملاحظات"]];
+  for (const d of [...S.docs].sort((a, b) => a.asn - b.asn)) rows.push([asnStr(d.asn), d.title, entName("types", d.type), entName("corrs", d.corr), d.docDate, domainPath(d.domain), (d.tags || []).map(t => entName("tags", t)).join("، "), d.filename, d.notes]);
+  const csv = "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+  saveFile("arshifi-index.csv", new Blob([csv], { type: "text/csv" }));
+}
+
+/* ============================== الأحداث ============================== */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-sel],[data-open],[data-act],[data-viewmode],[data-tab],[data-manage],[data-settab],[data-delent],[data-rmtag],[data-view],[data-delview]");
+  if (!t) return;
+  const d = S.open ? allDocs().find(x => x.id === S.open) : null;
+  if (t.dataset.delview) { e.stopPropagation(); S.tax.views = S.tax.views.filter(v => v.id !== t.dataset.delview); await persistTax(); renderSide(); return; }
+  if (t.dataset.sel) { S.sel = { kind: t.dataset.sel, id: t.dataset.id || undefined }; if (S.sel.kind === "all") S.sel = { kind: "all" }; S.page = 1; $("#side").classList.remove("open"); renderSide(); renderMain(); return; }
+  if (t.dataset.view) { const v = S.tax.views.find(x => x.id === t.dataset.view); if (v) { S.q = v.q; $("#q").value = v.q; S.sel = v.sel || { kind: "all" }; S.page = 1; render(); } return; }
+  if (t.dataset.open) { openDoc(t.dataset.open); return; }
+  if (t.dataset.viewmode) { S.view = t.dataset.viewmode; saveUI(); renderMain(); return; }
+  if (t.dataset.tab) { S.tab = t.dataset.tab; renderDrawer(); return; }
+  if (t.dataset.manage) { openSettings(t.dataset.manage); return; }
+  if (t.dataset.settab) { openSettings(t.dataset.settab); return; }
+  if (t.dataset.delent) { const k = S.setTab; const id = t.dataset.delent; S.tax[k] = S.tax[k].filter(x => x.id !== id); if (k === "domains") S.tax.domains.forEach(x => { if (x.parent === id) x.parent = null; }); const f = { domains: "domain", types: "type", corrs: "corr" }[k]; for (const doc of S.docs) { let ch = false; if (k === "tags" && doc.tags?.includes(id)) { doc.tags = doc.tags.filter(x => x !== id); ch = true; } else if (f && doc[f] === id) { doc[f] = null; ch = true; } if (ch) persistDoc(doc); } await persistTax(); openSettings(k); render(); return; }
+  if (t.dataset.rmtag && d) { d.tags = d.tags.filter(x => x !== t.dataset.rmtag); await persistDoc(d); render(); return; }
+  switch (t.dataset.act) {
+    case "add": $("#fileInput").click(); break;
+    case "close": closeDrawer(); break;
+    case "close-modal": closeModal(); break;
+    case "more": S.page++; renderMain(); break;
+    case "clear-sel": S.sel = { kind: "all" }; render(); break;
+    case "clear-q": S.q = ""; $("#q").value = ""; renderMain(); break;
+    case "hide-demo": S.demo = false; S.demoDismissed = true; saveUI(); DEMO_DOCS = []; invalidateCorpus(); render(); break;
+    case "show-demo": S.demoDismissed = false; saveUI(); buildDemo(); S.demo = true; invalidateCorpus(); render(); break;
+    case "save-view": { const name = (S.q.slice(0, 30) || selTitle()); S.tax.views.push({ id: uid(), name, q: S.q, sel: S.sel }); await persistTax(); renderSide(); toast("حُفظ العرض في الشريط الجانبي: " + name); break; }
+    case "clear-queue": S.queue = []; renderQueue(); break;
+    case "star": if (d) { d.starred = !d.starred; await persistDoc(d); render(); } break;
+    case "reviewed": if (d) { d.inbox = false; await persistDoc(d); render(); toast("نُقلت الوثيقة من صندوق الوارد"); } break;
+    case "delete": if (d) { S.confirmDelete = d.id; renderDrawer(); } break;
+    case "delete-no": S.confirmDelete = null; renderDrawer(); break;
+    case "delete-yes": if (d) {
+      if (d.demo) { DEMO_DOCS = DEMO_DOCS.filter(x => x.id !== d.id); }
+      else { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (er) { console.warn(er); } S.docs = S.docs.filter(x => x.id !== d.id); }
+      invalidateCorpus(); closeDrawer(); render(); toast("حُذفت الوثيقة"); } break;
+    case "open-file": if (d?.file) { try { const b = await S.store.getFile(d.file); if (b) { const u = URL.createObjectURL(b); const w = window.open(u, "_blank"); if (!w) await saveFile(d.filename, b); setTimeout(() => URL.revokeObjectURL(u), 120000); } } catch (er) { toast(er.message || "تعذر فتح الملف"); } } break;
+    case "sync": await syncFromFolder(); toast("اكتملت المزامنة"); break;
+    case "pick-folder": await chooseFolder(false); break;
+    case "move-to-folder": await chooseFolder(true); break;
+    case "use-browser": await useBrowserStorage(); break;
+    case "grant": await resumeFolder(true); break;
+    case "update-now": applyUpdate(); break;
+    case "download": if (d?.file) { try { const b = await S.store.getFile(d.file); if (b) await saveFile(d.filename, b); } catch (er) { toast("تعذر التنزيل"); } } break;
+    case "reclassify": if (d) { const c = classify(d); const before = JSON.stringify([d.domain, d.type, d.corr, d.tags, d.docDate]); applyClassification(d, c, true); await persistDoc(d); render(); toast(before === JSON.stringify([d.domain, d.type, d.corr, d.tags, d.docDate]) ? "لا تغييرات: القواعد الحالية لا تقترح شيئاً جديداً" : "طُبّق التصنيف التلقائي"); } break;
+    case "ai": if (d) { S.aiBusy[d.id] = true; renderDrawer(); try { const s = await aiSuggest(d); (S.suggestions ||= {})[d.id] = s; } catch (er) { toast(er.code === "not_granted" ? "لم يُسمح باستخدام Claude لهذه الصفحة" : er.code === "rate_limited" ? "طلبات كثيرة، حاول بعد قليل" : "تعذر الاقتراح: " + (er.message || er.code)); } S.aiBusy[d.id] = false; if (S.open === d.id) renderDrawer(); } break;
+    case "ai-apply": if (d && S.suggestions?.[d.id]) { applyAI(d, S.suggestions[d.id], true); delete S.suggestions[d.id]; await persistDoc(d); render(); toast("طُبّقت الاقتراحات"); } break;
+    case "ai-dismiss": if (d) { delete S.suggestions[d.id]; renderDrawer(); } break;
+    case "reocr": if (d?.file) { toast("إعادة التعرف الضوئي…", 8000); try { const blob = await S.store.getFile(d.file); let canv = []; if (/pdf/.test(d.mime)) { const pdfjs = await getPdfjs(); const pdf = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise; for (let i = 1; i <= Math.min(pdf.numPages, S.tax.settings.ocrPages); i++) { const p = await pdf.getPage(i); canv.push(await renderPdfPage(pdf, i, ocrScaleFor(p))); } } else canv = [await loadImage(blob)]; const r = await runOCR(canv, m => toast(m, 8000)); if (r.text.trim()) { d.text = r.text.slice(0, MAX_TEXT); d.textSource = r.engine; await persistDoc(d); renderDrawer(); toast("حُدّث النص المستخرج"); } else toast("لم يُستخرج أي نص"); } catch (er) { toast("تعذر: " + (er.message || er)); } } break;
+    case "add-ent": { const k = S.setTab; const e2 = E("عنصر جديد", "", k === "tags" ? "any" : "auto"); if (k === "domains" || k === "types") e2.color = PALETTE[S.tax[k].length % PALETTE.length]; S.tax[k].push(e2); await persistTax(); openSettings(k); renderSide(); setTimeout(() => { const ins = document.querySelectorAll(`[data-ent="${e2.id}"] input[data-ef=name]`); ins[0]?.select(); }, 30); break; }
+    case "apply-rules": { let n = 0; for (const doc of S.docs) { const before = JSON.stringify([doc.domain, doc.type, doc.corr, doc.tags]); applyClassification(doc, classify(doc)); if (before !== JSON.stringify([doc.domain, doc.type, doc.corr, doc.tags])) { n++; await persistDoc(doc); } } render(); toast(`صُنّفت ${n} وثيقة`); break; }
+    case "export": exportBackup(); break;
+    case "export-csv": exportCSV(); break;
+  }
+});
+document.addEventListener("input", e => {
+  const t = e.target; const d = S.open ? allDocs().find(x => x.id === S.open) : null;
+  if (t.id === "q") { S.q = t.value; S.page = 1; if (S.q && S.sort === "added-desc") S.sort = "relevance"; if (!S.q && S.sort === "relevance") S.sort = "added-desc"; renderMainDeb(); return; }
+  if (t.dataset.f && d && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t.type !== "date") { d[t.dataset.f] = t.value; saveField(d); }
+});
+const renderMainDeb = debounce(() => { renderMain(); if (S.open && S.tab === "text") renderDrawer(); }, 90);
+document.addEventListener("change", async e => {
+  const t = e.target; const d = S.open ? allDocs().find(x => x.id === S.open) : null;
+  if (t.id === "sortSel") { S.sort = t.value; saveUI(); renderMain(); return; }
+  if (t.id === "fileInput") { importFiles(t.files); t.value = ""; return; }
+  if (t.id === "importBackup") { if (t.files[0]) importBackup(t.files[0]); return; }
+  if (t.dataset.f && d && (t.tagName === "SELECT" || t.type === "date")) { d[t.dataset.f] = t.value || (t.type === "date" ? "" : null); await persistDoc(d); render(); return; }
+  if (t.dataset.ef) { const row = t.closest("[data-ent]"); const k = S.setTab; const en = S.tax[k].find(x => x.id === row.dataset.ent); if (en) { en[t.dataset.ef] = t.value || (t.dataset.ef === "parent" ? null : ""); await persistTax(); renderSide(); renderMain(); } return; }
+  if (t.id === "set-ocr") { S.tax.settings.ocr = t.value; await persistTax(); }
+  if (t.id === "set-langs") { S.tax.settings.ocrLangs = t.value.trim() || "ara+fra+eng"; if (tessWorker) { tessWorker.terminate(); tessWorker = null; } await persistTax(); }
+  if (t.id === "set-pages") { S.tax.settings.ocrPages = Math.max(1, Math.min(200, +t.value || 8)); await persistTax(); }
+  if (t.id === "set-ai") { S.tax.settings.autoAI = t.checked; await persistTax(); }
+});
+document.addEventListener("keydown", async e => {
+  if (e.target.id === "f-tagin" && e.key === "Enter") {
+    e.preventDefault(); const v = e.target.value.trim(); const d = allDocs().find(x => x.id === S.open); if (!v || !d) return;
+    let tg = S.tax.tags.find(x => norm(x.name) === norm(v)); if (!tg) { tg = E(v, "", "auto"); S.tax.tags.push(tg); await persistTax(); }
+    if (!d.tags.includes(tg.id)) d.tags.push(tg.id); await persistDoc(d); render(); setTimeout(() => $("#f-tagin")?.focus(), 0); return;
+  }
+  if (e.key === "Escape") { if ($("#modalLayer")) closeModal(); else if (S.open) closeDrawer(); else if ($("#side").classList.contains("open")) $("#side").classList.remove("open"); }
+  if (e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName)) { e.preventDefault(); $("#q").focus(); }
+});
+$("#addBtn").onclick = () => $("#fileInput").click();
+$("#settingsBtn").onclick = () => openSettings("general");
+$("#syntaxBtn").onclick = openSyntax;
+$("#menuBtn").onclick = () => $("#side").classList.toggle("open");
+let dragN = 0;
+window.addEventListener("dragenter", e => { if (![...(e.dataTransfer?.types || [])].includes("Files")) return; e.preventDefault(); if (dragN++ === 0) { const o = document.createElement("div"); o.className = "drop"; o.id = "dropO"; o.innerHTML = "<div>أفلت الملفات هنا لأرشفتها</div>"; document.body.appendChild(o); } });
+window.addEventListener("dragover", e => { if ([...(e.dataTransfer?.types || [])].includes("Files")) e.preventDefault(); });
+window.addEventListener("dragleave", () => { if (--dragN <= 0) { dragN = 0; $("#dropO")?.remove(); } });
+window.addEventListener("drop", e => { e.preventDefault(); dragN = 0; $("#dropO")?.remove(); if (e.dataTransfer?.files?.length) importFiles(e.dataTransfer.files); });
+document.addEventListener("paste", e => { const fs = [...(e.clipboardData?.files || [])]; if (fs.length) importFiles(fs); });
+
+/* ============================== التشغيل ============================== */
+const MEMORY_STORE = () => ({ kind: "memory", loadAll: async () => ({ docs: [], tax: null }), saveDoc() {}, deleteDoc() {}, saveTax() {}, putFile: async (id, b) => { (S._mem ||= {})[id] = b; return { kind: "mem", id }; }, getFile: async r => r ? S._mem?.[r.id] : null, delFile() {} });
+async function loadInto(store, data) {
+  S.store = store; data = data || await store.loadAll().catch(e => { console.error(e); return { docs: [], tax: null }; });
+  const def = defaultTax();
+  S.tax = data.tax ? { ...def, ...data.tax, settings: { ...def.settings, ...(data.tax.settings || {}) } } : def;
+  if (!data.tax) { try { await store.saveTax(S.tax); } catch (e) { console.warn(e); } }
+  S.docs = (data.docs || []).filter(d => d && d.id); S.docs.forEach(indexDoc);
+  const maxAsn = S.docs.reduce((m, d) => Math.max(m, d.asn || 0), 0); if (S.tax.nextAsn <= maxAsn) S.tax.nextAsn = maxAsn + 1;
+  S.demo = false; DEMO_DOCS = [];
+  if (!S.docs.length && !S.demoDismissed) { try { await Promise.race([document.fonts.ready, sleep(1500)]); } catch (e) {} buildDemo(); S.demo = true; }
+  invalidateCorpus(); closeModal(); render(); readyResolve();
+}
+let readyResolve; const appReady = new Promise(r => readyResolve = r);
+// فتح الملفات من Finder عبر «فتح باستخدام ← أرشيفي»
+if ("launchQueue" in window) window.launchQueue.setConsumer(async p => { if (!p.files?.length) return; await appReady; importFiles(await Promise.all(p.files.map(h => h.getFile()))); });
+async function useFolder(handle, migrate) {
+  const fs = await new FolderStore(handle, S.local).init();
+  if (migrate && S.docs.length) {
+    const exists = await fs.hasArchive(); const target = exists ? await fs.loadAll() : { docs: [], tax: null };
+    const tax = target.tax || S.tax; if (target.tax) for (const k of ["domains", "types", "corrs", "tags", "views"]) for (const e of S.tax[k] || []) if (!tax[k].some(x => x.id === e.id)) tax[k].push(e);
+    let n = 0; toast("جارٍ نقل الأرشيف إلى المجلد…", 60000);
+    for (const d of S.docs) {
+      if (target.docs.some(x => x.id === d.id || x.hash === d.hash)) continue;
+      const o = clean(d); try { const b = await S.store.getFile(d.file); o.file = b ? await fs.putFile(d.id, b, d.filename, d) : null; } catch (e) { o.file = null; }
+      await fs.saveDoc(o); n++;
+    }
+    tax.nextAsn = Math.max(tax.nextAsn || 1, S.tax.nextAsn); await fs.saveTax(tax);
+    toast(`نُقلت ${n} وثيقة إلى «${handle.name}». تبقى نسخة في المتصفح إلى أن تحذفها.`, 6000);
+  }
+  await setStorageChoice(S.local, { mode: "folder", handle });
+  await loadInto(fs);
+}
+async function chooseFolder(migrate) {
+  if (!FS_OK) { toast("اختيار المجلدات يتطلب متصفح Chrome أو Edge"); return; }
+  let h; try { h = await window.showDirectoryPicker({ id: "arshifi", mode: "readwrite", startIn: "documents" }); }
+  catch (e) { if (e.name !== "AbortError") toast("تعذر فتح المجلد: " + (e.message || e)); return; }
+  if (await folderPermission(h, true) !== "granted") { toast("لم يُمنح إذن الكتابة في المجلد"); return; }
+  await useFolder(h, migrate);
+}
+async function useBrowserStorage() { await setStorageChoice(S.local, { mode: "local" }); await loadInto(S.local || MEMORY_STORE()); }
+async function resumeFolder(ask) {
+  const ch = S.pendingFolder; if (!ch) return;
+  try { if (await folderPermission(ch.handle, ask) === "granted") { S.pendingFolder = null; await useFolder(ch.handle, false); return true; } }
+  catch (e) { console.warn(e); toast("تعذر الوصول إلى المجلد: " + (e.message || e)); }
+  return false;
+}
+function showLock(name) {
+  $("#main").innerHTML = `<div class="lock"><h3>أرشيفك في مجلد «${esc(name)}»</h3><p>يطلب المتصفح إذنك لفتح المجلد في كل جلسة. لتجنّب هذا السؤال اختر «السماح في كل زيارة» عند ظهوره.</p><div class="actions"><button class="btn primary" data-act="grant">فتح الأرشيف</button><button class="btn" data-act="pick-folder">اختيار مجلد آخر</button></div></div>`;
+}
+function showWelcome() {
+  openModal(`<header><h2>أين تريد حفظ أرشيفك؟</h2></header><div class="content"><div class="choice">
+    <article class="rec"><h3>مجلد على جهازك أو في iCloud Drive <span class="badge">مستحسن</span></h3>
+      <p>أنشئ في Finder مجلداً باسم «أرشيفي» داخل iCloud Drive، ثم اختره هنا. تُحفظ فيه الملفات الأصلية بأسماء مقروءة مع بطاقات فهرستها، فيتزامن الأرشيف تلقائياً بين أجهزة الماك. على جهاز ماك آخر اختر المجلد نفسه فيفتح الأرشيف كما هو.</p>
+      ${FS_OK ? `<button class="btn primary" data-act="pick-folder">اختيار المجلد…</button>` : `<p style="color:var(--warn)">هذا المتصفح لا يسمح للتطبيقات بالكتابة في المجلدات. افتح أرشيفي في Chrome أو Edge لاستعمال هذا الخيار.</p>`}</article>
+    <article><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق في هذا المتصفح على هذا الجهاز، دون مزامنة. يمكنك نقلها إلى مجلد لاحقاً من الإعدادات.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
+  </div></div>`);
+}
+let syncing = false;
+async function syncFromFolder(quiet) {
+  if (S.store?.kind !== "folder" || syncing) return; syncing = true;
+  try {
+    const { changed, removed, tax } = await S.store.changes();
+    if (tax) { const def = defaultTax(); S.tax = { ...def, ...tax, settings: { ...def.settings, ...(tax.settings || {}) } }; }
+    for (const d of changed) { const i = S.docs.findIndex(x => x.id === d.id); indexDoc(d); if (i === -1) S.docs.push(d); else S.docs[i] = d; }
+    if (removed.length) S.docs = S.docs.filter(d => !removed.includes(d.id));
+    if (changed.length || removed.length || tax) {
+      if (S.demo && S.docs.length) { S.demo = false; DEMO_DOCS = []; }
+      S.docs.forEach(indexDoc); invalidateCorpus(); renderSide(); renderMain();
+      if (!quiet && (changed.length || removed.length)) toast(`مزامنة: ${changed.length} محدثة، ${removed.length} محذوفة`);
+    }
+  } catch (e) { console.warn("sync", e); if (e.name === "NotAllowedError" || e.name === "NotFoundError") toast("فُقد الوصول إلى مجلد الأرشيف؛ أعد فتحه من الإعدادات"); }
+  finally { syncing = false; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) syncFromFolder(); });
+setInterval(() => { if (!document.hidden && !busy()) syncFromFolder(true); }, 45000);
+
+/* ---------- التحديث التلقائي ---------- */
+const busy = () => S.queue.some(i => i.state === "run" || i.state === "wait");
+function applyUpdate() { try { sessionStorage.setItem("arshifi.updated", "1"); } catch (e) {} location.reload(); }
+if ("serviceWorker" in navigator && VENDOR) {
+  navigator.serviceWorker.register("sw.js").then(reg => {
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
+    setInterval(() => reg.update().catch(() => {}), 30 * 60000);
+  }).catch(e => console.warn("sw", e));
+  let hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) { hadController = true; return; }
+    if (busy() || S.open) { S.updatePending = true; toast("نسخة جديدة من أرشيفي جاهزة، ستُطبَّق بعد انتهاء عملك الحالي", 5000); }
+    else applyUpdate();
+  });
+}
+
+async function boot() {
+  S.tax = defaultTax(); renderSide(); $("#main").innerHTML = `<div class="empty"><h3>جارٍ فتح الأرشيف…</h3></div>`;
+  try { if (sessionStorage.getItem("arshifi.updated")) { sessionStorage.removeItem("arshifi.updated"); setTimeout(() => toast("تم تحديث أرشيفي إلى الإصدار " + APP_VERSION), 800); } } catch (e) {}
+  let local = null;
+  try { local = new LocalStore(); await local.open(); } catch (e) { console.warn("IndexedDB unavailable", e); local = null; }
+  S.local = local;
+  // داخل Claude: التخزين في حساب المستخدم
+  if (window.claude?.use) {
+    try {
+      const [db, user, assets, sample, downloads] = await Promise.all(["db", "user", "assets", "sample", "downloads"].map(n => window.claude.use(n).catch(() => null)));
+      S.caps.sample = sample; S.caps.downloads = downloads;
+      if (sample) { try { const l = await sample.limits(); S.caps.imgs = l.images || null; } catch (e) {} }
+      const id = user ? await user.id() : null;
+      if (db && id) { const c = new CloudStore(db, assets, id, local); const data = await Promise.race([c.loadAll(), sleep(12000).then(() => null)]); if (data) { try { if (!data.tax) await c.saveTax(defaultTax()); return loadInto(c, data); } catch (e) { console.warn("cloud write refused", e); } } }
+    } catch (e) { console.warn("cloud mode unavailable", e); }
+    return loadInto(local || MEMORY_STORE());
+  }
+  const choice = await getStorageChoice(local);
+  if (choice?.mode === "folder" && choice.handle) {
+    S.pendingFolder = choice;
+    if (await resumeFolder(false)) return;
+    return showLock(choice.handle.name);
+  }
+  if (!local) { toast("التخزين غير متاح في هذا المتصفح: لن تُحفظ الوثائق بعد إغلاق الصفحة", 6000); return loadInto(MEMORY_STORE()); }
+  const data = await local.loadAll();
+  await loadInto(local, data);
+  if (!choice && !data.docs.length) showWelcome();   // أول تشغيل
+  else if (!choice) setStorageChoice(local, { mode: "local" });
+}
+boot();
+</script>
+</body>
+</html>

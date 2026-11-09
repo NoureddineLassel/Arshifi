@@ -1,0 +1,13 @@
+# Netlify: publish the folder as-is (no build step)
+[build]
+  publish = "."
+
+# always fetch the newest service worker so updates reach installed devices
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
