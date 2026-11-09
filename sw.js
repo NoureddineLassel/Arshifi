@@ -1,8 +1,8 @@
 /* أرشيفي — service worker: يُبقي التطبيق متاحاً دون اتصال ويوصل التحديثات تلقائياً.
    ارفع VERSION بعد كل نشر حتى تلتقط الأجهزة الملفات الجديدة (وحدّث APP_VERSION في index.html). */
-const VERSION = 'arshifi-v3';
+const VERSION = 'arshifi-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/favicon.ico', 'icons/arshifi-180.png', 'icons/arshifi-192.png', 'icons/arshifi-512.png',
-  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js', 'vendor/mammoth.browser.min.js', 'vendor/tesseract/tesseract.min.js', 'vendor/tesseract/worker.min.js'];
+  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js', 'vendor/mammoth.browser.min.js', 'vendor/jszip.min.js', 'vendor/tesseract/tesseract.min.js', 'vendor/tesseract/worker.min.js'];
 const FONTS = 'arshifi-fonts';
 self.addEventListener('install', e => e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== FONTS).map(k => caches.delete(k)))).then(() => self.clients.claim())));

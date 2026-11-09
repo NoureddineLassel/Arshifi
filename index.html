@@ -303,6 +303,7 @@ table.list .t{font-weight:600}
   </div>
   <div class="top-actions">
     <button class="btn primary" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg><span class="lbl-hide">إضافة وثائق</span></button>
+    <button class="btn" id="syncBtn" title="المزامنة بين الآيباد والماك عبر iCloud Drive"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></svg><span class="lbl-hide">مزامنة</span></button>
     <button class="btn ghost icon-btn" id="settingsBtn" aria-label="الإعدادات والتصنيفات" title="الإعدادات والتصنيفات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     <input type="file" id="fileInput" multiple hidden accept=".pdf,.png,.jpg,.jpeg,.webp,.gif,.bmp,.tif,.tiff,.txt,.md,.csv,.docx,.html,.htm,application/pdf,image/*">
   </div>
@@ -321,16 +322,17 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.1.1";
+const APP_VERSION = "1.2.0";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
-  pdf: "vendor/pdf.min.js", pdfWorker: new URL("vendor/pdf.worker.min.js", location.href).href, mammoth: "vendor/mammoth.browser.min.js", tesseract: "vendor/tesseract/tesseract.min.js",
+  pdf: "vendor/pdf.min.js", pdfWorker: new URL("vendor/pdf.worker.min.js", location.href).href, mammoth: "vendor/mammoth.browser.min.js", jszip: "vendor/jszip.min.js", tesseract: "vendor/tesseract/tesseract.min.js",
   tessOpts: { workerPath: new URL("vendor/tesseract/worker.min.js", location.href).href, corePath: new URL("vendor/tesseract/core", location.href).href, langPath: new URL("vendor/tesseract/lang", location.href).href },
 } : {
   pdf: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js",
   pdfWorker: "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js",
   mammoth: "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
+  jszip: "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
   tesseract: "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js", tessOpts: {},
 };
 const _scripts = {};
@@ -1071,7 +1073,7 @@ async function renderPreview(d) {
   const done = node => { if (tok !== previewToken) return; S._previewNode = node; const cur = $("#preview"); if (cur) cur.replaceWith(node); };
   const box = document.createElement("div"); box.className = "preview"; box.id = "preview";
   if (d.demo || !d.file) {
-    box.innerHTML = (d.thumb ? `<img class="page" src="${d.thumb}" alt="الصفحة الأولى">` : "") + `<p class="note">${d.demo ? "وثيقة تجريبية — هذه صورة مصغّرة مولّدة. وثائقك الحقيقية تُعرض هنا صفحةً صفحة." : "الملف الأصلي غير متوفر على هذا الجهاز."}</p>`;
+    box.innerHTML = (d.thumb ? `<img class="page" src="${d.thumb}" alt="الصفحة الأولى">` : "") + `<p class="note">${d.demo ? "وثيقة تجريبية — هذه صورة مصغّرة مولّدة. وثائقك الحقيقية تُعرض هنا صفحةً صفحة." : (d.fileElsewhere ? "الملف الأصلي على جهازك الآخر ولم يصل بعد. صدّر من هناك «ملفاً كاملاً» ثم استورده هنا." : "الملف الأصلي غير متوفر على هذا الجهاز.")}</p>`;
     return done(box);
   }
   try {
@@ -1098,9 +1100,10 @@ function closeDrawer() { setTimeout(() => { if (S.updatePending && !busy()) appl
 async function persistDoc(d) {
   indexDoc(d); invalidateCorpus();
   if (d.demo) return;
+  d.modified = new Date().toISOString(); // يحدد أي نسخة أحدث عند المزامنة بين الأجهزة
   try { await S.store.saveDoc(clean(d)); } catch (e) { console.error(e); toast("تعذر الحفظ: " + (e.message || e.code || e)); }
 }
-async function persistTax() { allDocs().forEach(indexDoc); invalidateCorpus(); try { await S.store.saveTax(S.tax); } catch (e) { console.error(e); toast("تعذر حفظ الإعدادات"); } }
+async function persistTax() { S.tax.modified = new Date().toISOString(); allDocs().forEach(indexDoc); invalidateCorpus(); try { await S.store.saveTax(S.tax); } catch (e) { console.error(e); toast("تعذر حفظ الإعدادات"); } }
 const saveField = debounce(async (d) => { await persistDoc(d); renderSide(); renderMain(); }, 500);
 
 /* ============================== الاستيراد ============================== */
@@ -1249,6 +1252,110 @@ function exportCSV() {
   saveFile("arshifi-index.csv", new Blob([csv], { type: "text/csv" }));
 }
 
+/* ============================== المزامنة عبر ملف (iCloud Drive) ============================== */
+// ملف ZIP يحوي manifest.json (التصنيفات + بطاقات الفهرسة + سجل المحذوفات) و files/<id> (الملفات الأصلية).
+// «التغييرات فقط» يضم الملفات الأصلية للوثائق المعدلة منذ آخر تصدير من هذا الجهاز، وكل البطاقات دائماً.
+const DEVICE = IS_IOS ? "iPad" : "Mac";
+function syncState() { try { return JSON.parse(localStorage.getItem("arshifi.sync") || "{}"); } catch (e) { return {}; } }
+function setSyncState(p) { try { localStorage.setItem("arshifi.sync", JSON.stringify({ ...syncState(), ...p })); } catch (e) {} }
+const stamp = d => d.modified || d.added || "";
+// الوثائق التي وصلت من الجهاز الآخر لا يُعاد إرسال ملفاتها الأصلية إليه
+function recvMap() { try { return JSON.parse(localStorage.getItem("arshifi.sync.recv") || "{}"); } catch (e) { return {}; } }
+function saveRecv(m) { try { localStorage.setItem("arshifi.sync.recv", JSON.stringify(m)); } catch (e) {} }
+let syncPkg = null;
+function openSync(msg) {
+  const st = syncState(); const canShare = !!(navigator.canShare && window.File);
+  openModal(`<header><h2>المزامنة بين أجهزتك</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content">
+    <p class="help">١. على الجهاز الذي أضفت فيه وثائق أو عدّلتها: <b>تجهيز ملف المزامنة</b> ثم احفظه في iCloud Drive ← أرشيفي.<br>٢. على الجهاز الآخر: <b>استيراد ملف مزامنة</b> واختر أحدث ملف من المجلد نفسه. تُضاف الوثائق الجديدة، وتؤخذ النسخة الأحدث من كل وثيقة معدّلة، وتُحذف الوثائق المحذوفة.</p>
+    ${msg ? `<div class="pick-err" style="background:var(--accent-2);color:var(--ink)">${msg}</div>` : ""}
+    <div class="setting"><p>تصدير من هذا الجهاز (${DEVICE})<small>${st.lastExport ? "آخر تصدير: " + esc(new Date(st.lastExport).toLocaleString("ar-DZ")) + ". «التغييرات فقط» يضم الملفات الأصلية الجديدة أو المعدلة منذ ذلك الحين." : "أول تصدير من هذا الجهاز سيكون كاملاً."}</small></p>
+      <span style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" data-act="sync-export" ${syncPkg?.building ? "disabled" : ""}>تجهيز ملف المزامنة</button>${st.lastExport ? `<button class="btn" data-act="sync-export-full">ملف كامل</button>` : ""}</span></div>
+    <div id="syncReady">${syncReadyHTML(canShare)}</div>
+    <div class="setting"><p>استيراد في هذا الجهاز<small>${st.lastImport ? "آخر استيراد: " + esc(new Date(st.lastImport).toLocaleString("ar-DZ")) : "اختر ملف arshifi-sync من iCloud Drive."}</small></p><label class="btn" for="syncFile" style="cursor:pointer">استيراد ملف مزامنة…</label><input type="file" id="syncFile" accept=".zip,application/zip" hidden></div>
+  </div>`);
+}
+function syncReadyHTML(canShare) {
+  if (!syncPkg) return "";
+  if (syncPkg.building) return `<p class="help">جارٍ تجهيز الملف… ${esc(syncPkg.progress || "")}</p>`;
+  return `<div class="pick-err" style="background:var(--accent-2);color:var(--ink)"><b>الملف جاهز: ${esc(syncPkg.name)} (${fmtSize(syncPkg.blob.size)}، ${syncPkg.count} وثيقة، ${syncPkg.files} ملفاً أصلياً)</b>
+    <span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${canShare ? `<button class="btn primary small" data-act="sync-share">حفظ في الملفات (iCloud Drive)</button>` : ""}<button class="btn small" data-act="sync-save">${canShare ? "تنزيل" : "حفظ الملف…"}</button></span></div>`;
+}
+async function buildSync(full) {
+  const st = syncState(); const since = full || !st.lastExport ? "" : st.lastExport;
+  syncPkg = { building: true, progress: "" }; openSync();
+  try {
+    await loadScript(LIBS.jszip); const zip = new window.JSZip(); let files = 0; const started = new Date().toISOString();
+    const docs = S.docs.map(clean); const recv = since ? recvMap() : {};
+    for (let i = 0; i < S.docs.length; i++) {
+      const d = S.docs[i]; if (!d.file || (since && (stamp(d) <= since || recv[d.id] === stamp(d)))) continue;
+      syncPkg.progress = `${i + 1}/${S.docs.length}`; const el = $("#syncReady"); if (el) el.innerHTML = syncReadyHTML(false);
+      try { const b = await S.store.getFile(d.file); if (b) { zip.file("files/" + d.id, b, { binary: true }); files++; } } catch (e) { console.warn("skip file", d.id, e); }
+    }
+    zip.file("manifest.json", JSON.stringify({ app: "arshifi", kind: "sync", format: 1, exported: started, device: DEVICE, full: !since, tax: S.tax, docs }));
+    const blob = await zip.generateAsync({ type: "blob", compression: "STORE", mimeType: "application/zip" });
+    const t = new Date(); const pad = n => String(n).padStart(2, "0");
+    const name = `arshifi-sync-${DEVICE}-${t.getFullYear()}${pad(t.getMonth() + 1)}${pad(t.getDate())}-${pad(t.getHours())}${pad(t.getMinutes())}.zip`;
+    syncPkg = { blob, name, count: docs.length, files, started };
+  } catch (e) { console.error(e); syncPkg = null; return openSync("تعذر تجهيز الملف: " + esc(e.message || e)); }
+  openSync();
+}
+function markExported() { if (syncPkg?.started) setSyncState({ lastExport: syncPkg.started }); }
+async function shareSync() {
+  const f = new File([syncPkg.blob], syncPkg.name, { type: "application/zip" });
+  if (!navigator.canShare?.({ files: [f] })) return saveSync();
+  try { await navigator.share({ files: [f], title: "ملف مزامنة أرشيفي" }); markExported(); toast("احفظه في iCloud Drive ← أرشيفي، ثم استورده في الجهاز الآخر", 6000); }
+  catch (e) { if (e.name !== "AbortError") { console.warn(e); saveSync(); } }
+}
+async function saveSync() {
+  if (window.showSaveFilePicker) {
+    try { const h = await window.showSaveFilePicker({ suggestedName: syncPkg.name, id: "arshifi-sync", startIn: "documents", types: [{ description: "ملف مزامنة أرشيفي", accept: { "application/zip": [".zip"] } }] }); const w = await h.createWritable(); await w.write(syncPkg.blob); await w.close(); markExported(); toast("حُفظ ملف المزامنة"); return; }
+    catch (e) { if (e.name === "AbortError") return; console.warn(e); }
+  }
+  await saveFile(syncPkg.name, syncPkg.blob); markExported();
+}
+async function importSync(file) {
+  openSync("جارٍ الاستيراد…");
+  try {
+    await loadScript(LIBS.jszip); const zip = await window.JSZip.loadAsync(file);
+    const mf = zip.file("manifest.json"); if (!mf) throw new Error("هذا ليس ملف مزامنة لأرشيفي");
+    const m = JSON.parse(await mf.async("string")); if (m.app !== "arshifi") throw new Error("هذا ليس ملف مزامنة لأرشيفي");
+    if (S.demo) { S.demo = false; DEMO_DOCS = []; }
+    const r = { added: 0, updated: 0, removed: 0, files: 0 };
+    // التصنيفات: اتحاد العناصر، والأحدث يغلب عند تعارض الاسم أو القاعدة
+    const rt = m.tax || {}; const remoteNewer = (rt.modified || "") > (S.tax.modified || "");
+    for (const k of ["domains", "types", "corrs", "tags", "views"]) for (const e of rt[k] || []) { const i = S.tax[k].findIndex(x => x.id === e.id); if (i === -1) S.tax[k].push(e); else if (remoteNewer) S.tax[k][i] = e; }
+    if (remoteNewer && rt.settings) S.tax.settings = { ...S.tax.settings, ...rt.settings };
+    const tomb = S.tax.deleted ||= {}; for (const [id, t] of Object.entries(rt.deleted || {})) if (!tomb[id] || tomb[id] < t) tomb[id] = t;
+    // المحذوفات
+    for (const d of [...S.docs]) { const t = tomb[d.id]; if (t && t >= stamp(d)) { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (e) {} S.docs = S.docs.filter(x => x.id !== d.id); r.removed++; } }
+    // الوثائق
+    let maxAsn = S.docs.reduce((a, d) => Math.max(a, d.asn || 0), 0); const recv = recvMap();
+    for (const rd of m.docs || []) {
+      if (tomb[rd.id] && tomb[rd.id] >= stamp(rd)) continue;
+      const local = S.docs.find(x => x.id === rd.id);
+      if (!local && rd.hash && S.docs.some(x => x.hash === rd.hash)) continue; // الملف نفسه مؤرشف هنا مسبقاً
+      const zf = zip.file("files/" + rd.id);
+      if (!local) {
+        const d = { ...rd };
+        if (S.docs.some(x => x.asn === d.asn)) { d.asn = ++maxAsn; d.modified = new Date().toISOString(); } // تعارض في الرقم الأرشيفي
+        maxAsn = Math.max(maxAsn, d.asn || 0);
+        if (zf) { d.file = await S.store.putFile(d.id, new Blob([await zf.async("arraybuffer")], { type: d.mime }), d.filename, d); d.fileElsewhere = false; r.files++; }
+        else { d.file = null; d.fileElsewhere = true; }
+        indexDoc(d); S.docs.push(d); await S.store.saveDoc(clean(d)); r.added++; if (d.modified === rd.modified) recv[d.id] = stamp(d);
+      } else if (stamp(rd) > stamp(local) || (!local.file && zf)) {
+        const keepFile = local.file; Object.assign(local, rd); if (keepFile) local.file = keepFile;
+        if (!keepFile && zf) { local.file = await S.store.putFile(local.id, new Blob([await zf.async("arraybuffer")], { type: local.mime }), local.filename, local); r.files++; }
+        local.fileElsewhere = !local.file;
+        indexDoc(local); await S.store.saveDoc(clean(local)); r.updated++; recv[local.id] = stamp(local);
+      }
+    }
+    S.tax.nextAsn = Math.max(S.tax.nextAsn || 1, rt.nextAsn || 1, maxAsn + 1);
+    await S.store.saveTax(S.tax); allDocs().forEach(indexDoc); invalidateCorpus();
+    saveRecv(recv); setSyncState({ lastImport: new Date().toISOString() }); render();
+    openSync(`<b>اكتمل الاستيراد من ${esc(m.device || "جهاز آخر")} (${esc(new Date(m.exported).toLocaleString("ar-DZ"))})</b>أضيفت ${r.added}، حُدّثت ${r.updated}، حُذفت ${r.removed}، ووصل ${r.files} ملفاً أصلياً.${(m.docs || []).length && !m.full ? " (ملف تغييرات فقط)" : ""}`);
+  } catch (e) { console.error(e); openSync("تعذر الاستيراد: " + esc(e.message || e)); }
+}
+
 /* ============================== الأحداث ============================== */
 document.addEventListener("click", async e => {
   const t = e.target.closest("[data-sel],[data-open],[data-act],[data-viewmode],[data-tab],[data-manage],[data-settab],[data-delent],[data-rmtag],[data-view],[data-delview]");
@@ -1281,7 +1388,7 @@ document.addEventListener("click", async e => {
     case "delete-no": S.confirmDelete = null; renderDrawer(); break;
     case "delete-yes": if (d) {
       if (d.demo) { DEMO_DOCS = DEMO_DOCS.filter(x => x.id !== d.id); }
-      else { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (er) { console.warn(er); } S.docs = S.docs.filter(x => x.id !== d.id); }
+      else { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (er) { console.warn(er); } S.docs = S.docs.filter(x => x.id !== d.id); (S.tax.deleted ||= {})[d.id] = new Date().toISOString(); await persistTax(); }
       invalidateCorpus(); closeDrawer(); render(); toast("حُذفت الوثيقة"); } break;
     case "open-file": if (d?.file) { try { const b = await S.store.getFile(d.file); if (b) { const u = URL.createObjectURL(b); const w = window.open(u, "_blank"); if (!w) await saveFile(d.filename, b); setTimeout(() => URL.revokeObjectURL(u), 120000); } } catch (er) { toast(er.message || "تعذر فتح الملف"); } } break;
     case "sync": await syncFromFolder(); toast("اكتملت المزامنة"); break;
@@ -1299,6 +1406,10 @@ document.addEventListener("click", async e => {
     case "add-ent": { const k = S.setTab; const e2 = E("عنصر جديد", "", k === "tags" ? "any" : "auto"); if (k === "domains" || k === "types") e2.color = PALETTE[S.tax[k].length % PALETTE.length]; S.tax[k].push(e2); await persistTax(); openSettings(k); renderSide(); setTimeout(() => { const ins = document.querySelectorAll(`[data-ent="${e2.id}"] input[data-ef=name]`); ins[0]?.select(); }, 30); break; }
     case "apply-rules": { let n = 0; for (const doc of S.docs) { const before = JSON.stringify([doc.domain, doc.type, doc.corr, doc.tags]); applyClassification(doc, classify(doc)); if (before !== JSON.stringify([doc.domain, doc.type, doc.corr, doc.tags])) { n++; await persistDoc(doc); } } render(); toast(`صُنّفت ${n} وثيقة`); break; }
     case "export": exportBackup(); break;
+    case "sync-export": buildSync(false); break;
+    case "sync-export-full": buildSync(true); break;
+    case "sync-share": shareSync(); break;
+    case "sync-save": saveSync(); break;
     case "export-csv": exportCSV(); break;
   }
 });
@@ -1312,6 +1423,7 @@ document.addEventListener("change", async e => {
   const t = e.target; const d = S.open ? allDocs().find(x => x.id === S.open) : null;
   if (t.id === "sortSel") { S.sort = t.value; saveUI(); renderMain(); return; }
   if (t.id === "fileInput") { importFiles(t.files); t.value = ""; return; }
+  if (t.id === "syncFile") { if (t.files[0]) importSync(t.files[0]); t.value = ""; return; }
   if (t.id === "importBackup") { if (t.files[0]) importBackup(t.files[0]); return; }
   if (t.dataset.f && d && (t.tagName === "SELECT" || t.type === "date")) { d[t.dataset.f] = t.value || (t.type === "date" ? "" : null); await persistDoc(d); render(); return; }
   if (t.dataset.ef) { const row = t.closest("[data-ent]"); const k = S.setTab; const en = S.tax[k].find(x => x.id === row.dataset.ent); if (en) { en[t.dataset.ef] = t.value || (t.dataset.ef === "parent" ? null : ""); await persistTax(); renderSide(); renderMain(); } return; }
@@ -1332,6 +1444,7 @@ document.addEventListener("keydown", async e => {
 });
 $("#addBtn").onclick = () => $("#fileInput").click();
 $("#settingsBtn").onclick = () => openSettings("general");
+$("#syncBtn").onclick = () => openSync();
 $("#syntaxBtn").onclick = openSyntax;
 $("#menuBtn").onclick = () => $("#side").classList.toggle("open");
 let dragN = 0;
@@ -1413,7 +1526,7 @@ function showWelcome() {
     <article class="rec" ${FS_OK ? 'role="button" tabindex="0" data-act="pick-folder"' : ""}><h3>مجلد على جهازك أو في iCloud Drive <span class="badge">مستحسن</span></h3>
       <p>أنشئ في Finder مجلداً باسم «أرشيفي» داخل iCloud Drive، ثم اختره هنا (اختر المجلد الفرعي نفسه، لا iCloud Drive كله ولا «المستندات»، فـ Chrome يرفض المجلدات الرئيسية). تُحفظ فيه الملفات الأصلية بأسماء مقروءة مع بطاقات فهرستها، فيتزامن الأرشيف تلقائياً بين أجهزة الماك. على جهاز ماك آخر اختر المجلد نفسه فيفتح الأرشيف كما هو.</p>
       ${FS_OK ? `<button class="btn primary" data-act="pick-folder">اختيار المجلد…</button>` : `<p style="color:var(--warn)">${NO_FOLDER_MSG}</p>`}</article>
-    <article role="button" tabindex="0" data-act="use-browser"><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق في هذا المتصفح على هذا الجهاز، دون مزامنة. يمكنك نقلها إلى مجلد لاحقاً من الإعدادات.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
+    <article role="button" tabindex="0" data-act="use-browser"><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق داخل التطبيق على هذا الجهاز. للمزامنة مع أجهزتك الأخرى استعمل زر «مزامنة»: ملف تحفظه في iCloud Drive وتستورده في الجهاز الآخر.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
   </div></div>`);
 }
 let syncing = false;
@@ -1457,6 +1570,7 @@ async function boot() {
   let local = null;
   try { local = new LocalStore(); await local.open(); } catch (e) { console.warn("IndexedDB unavailable", e); local = null; }
   S.local = local;
+  try { navigator.storage?.persist?.(); } catch (e) {} // يطلب ألا يمسح النظام بيانات التطبيق تلقائياً
   // داخل Claude: التخزين في حساب المستخدم
   if (window.claude?.use) {
     try {
