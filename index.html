@@ -125,6 +125,7 @@ button{cursor:pointer}
 select.sel{height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 8px;font-size:12.5px}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 6px 2px 10px;background:var(--surface);border:1px solid var(--line);font-size:12px}
+.chip input[type=checkbox]{margin:0;width:14px;height:14px}
 .chip button{border:0;background:var(--sunk);width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:12px;line-height:1;padding:0;color:var(--muted)}
 
 /* cards */
@@ -330,7 +331,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.4.0";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
@@ -987,7 +988,7 @@ function renderMain() {
     h += `<div class="selbar"><span class="num">${n ? `حُدّدت ${n} وثيقة` : "انقر على الوثائق لتحديدها"}</span>
       <button class="btn small ghost" data-act="pick-all">تحديد كل النتائج (${rows.length})</button>${n ? `<button class="btn small ghost" data-act="pick-none">إلغاء التحديد</button>` : ""}<b></b>
       ${inTrash ? `<button class="btn small" data-act="bulk-restore" ${n ? "" : "disabled"}>استعادة</button><button class="btn small danger" data-act="bulk-forever" ${n ? "" : "disabled"}>حذف نهائي</button>`
-        : `<button class="btn small danger" data-act="bulk-trash" ${n ? "" : "disabled"}>نقل إلى السلة</button>`}</div>`;
+        : `<button class="btn small primary" data-act="bulk-edit" ${n ? "" : "disabled"}>تعديل</button><button class="btn small danger" data-act="bulk-trash" ${n ? "" : "disabled"}>نقل إلى السلة</button>`}</div>`;
   }
   S._rows = rows;
   const chips = [];
@@ -1258,6 +1259,61 @@ function openSettings(tab = "domains") {
     <div class="content">${body}</div>`);
 }
 function countUse(kind, id) { const f = { domains: "domain", types: "type", corrs: "corr" }[kind]; return count(d => kind === "tags" ? (d.tags || []).includes(id) : d[f] === id); }
+/* ---------- التعديل الجماعي ---------- */
+const KEEP = "__keep", CLEAR = "__clear";
+function bulkSelect(kind, id, label) {
+  return `<div class="field"><label for="${id}">${label}</label><select id="${id}"><option value="${KEEP}">— دون تغيير —</option><option value="${CLEAR}">— إزالة من كل المحدد —</option>${S.tax[kind].map(e => `<option value="${e.id}">${esc(kind === "domains" ? domainPath(e.id) : e.name)}</option>`).join("")}</select></div>`;
+}
+function openBulkEdit() {
+  const ds = pickedDocs(); if (!ds.length) return;
+  const present = [...new Set(ds.flatMap(d => d.tags || []))].filter(id => ent("tags", id));
+  S.bulkAdd = [];
+  openModal(`<header><h2>تعديل ${ds.length} وثيقة دفعة واحدة</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content"><div class="pane" style="padding:0">
+    <p class="help" style="margin:0">ما تتركه على «دون تغيير» يبقى كما هو في كل وثيقة. يُطبَّق ما تغيّره على كل الوثائق المحددة.</p>
+    <div class="row2">${bulkSelect("types", "b-type", "نوع الوثيقة")}${bulkSelect("corrs", "b-corr", "الجهة المُصدِرة")}</div>
+    ${bulkSelect("domains", "b-domain", "المجال")}
+    <div class="row2"><div class="field"><label for="b-date">تاريخ الوثيقة</label><input id="b-date" type="date"><small style="color:var(--muted);font-size:11.5px">اتركه فارغاً لعدم التغيير</small></div>
+      <div class="field"><label for="b-year">أو السنة فقط</label><input id="b-year" type="number" min="1950" max="2100" placeholder="مثال: 2025"><small style="color:var(--muted);font-size:11.5px">يغيّر السنة ويبقي اليوم والشهر</small></div></div>
+    <div class="field"><label for="b-tagin">إضافة وسوم</label><div class="tagbox" id="b-tags"><input id="b-tagin" list="b-taglist" placeholder="اكتب وسماً واضغط Enter"><datalist id="b-taglist">${S.tax.tags.map(t => `<option value="${esc(t.name)}">`).join("")}</datalist></div></div>
+    ${present.length ? `<div class="field"><label>إزالة وسوم</label><div class="tagcloud" style="padding:0">${present.map(id => `<label class="chip" style="cursor:pointer;padding:2px 10px"><input type="checkbox" class="b-rm" value="${id}"> ${esc(entName("tags", id))} <span class="mono" style="color:var(--faint)">${ds.filter(d => (d.tags || []).includes(id)).length}</span></label>`).join("")}</div></div>` : ""}
+    <div class="row2"><div class="field"><label for="b-star">المفضلة</label><select id="b-star"><option value="${KEEP}">— دون تغيير —</option><option value="1">إضافة إلى المفضلة</option><option value="0">إزالة من المفضلة</option></select></div>
+      <div class="field"><label for="b-inbox">صندوق الوارد</label><select id="b-inbox"><option value="${KEEP}">— دون تغيير —</option><option value="0">تمت المراجعة (إخراج من الوارد)</option><option value="1">إعادة إلى الوارد</option></select></div></div>
+    <div class="field"><label for="b-note">إضافة إلى الملاحظات</label><input id="b-note" placeholder="مثال: النسخة الورقية في الملف الأزرق، الرف 3"><small style="color:var(--muted);font-size:11.5px">يُضاف سطراً جديداً إلى ملاحظات كل وثيقة</small></div>
+    <div style="display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap"><button class="btn primary" data-act="bulk-apply">تطبيق على ${ds.length} وثيقة</button><button class="btn ghost" data-act="close-modal">إلغاء</button></div>
+  </div></div>`);
+}
+function renderBulkTags() {
+  const box = $("#b-tags"); if (!box) return;
+  box.querySelectorAll(".tg").forEach(x => x.remove());
+  const inp = $("#b-tagin");
+  for (const name of S.bulkAdd) { const sp = document.createElement("span"); sp.className = "tg"; sp.innerHTML = `${esc(name)}<button data-bulkrm="${esc(name)}" aria-label="إزالة">×</button>`; box.insertBefore(sp, inp); }
+}
+async function applyBulkEdit() {
+  const ds = pickedDocs(); const v = id => $("#" + id)?.value;
+  const type = v("b-type"), corr = v("b-corr"), domain = v("b-domain"), date = v("b-date"), year = v("b-year"), star = v("b-star"), inbox = v("b-inbox"), note = (v("b-note") || "").trim();
+  const pending = ($("#b-tagin")?.value || "").trim(); if (pending && !S.bulkAdd.includes(pending)) S.bulkAdd.push(pending);
+  const rm = [...document.querySelectorAll(".b-rm:checked")].map(x => x.value);
+  const addIds = [];
+  let taxChanged = false;
+  for (const name of S.bulkAdd) { let tg = S.tax.tags.find(x => norm(x.name) === norm(name)); if (!tg) { tg = E(name, "", "auto"); S.tax.tags.push(tg); taxChanged = true; } addIds.push(tg.id); }
+  if (/^\d{4}$/.test(year || "") && (+year < 1950 || +year > 2100)) return toast("السنة غير صحيحة");
+  const set = (val) => val === KEEP ? undefined : val === CLEAR ? null : val;
+  let n = 0;
+  for (const d of ds) {
+    const before = JSON.stringify([d.type, d.corr, d.domain, d.docDate, d.tags, d.starred, d.inbox, d.notes]);
+    for (const [k, val] of [["type", type], ["corr", corr], ["domain", domain]]) { const x = set(val); if (x !== undefined) d[k] = x; }
+    if (date) d.docDate = date;
+    else if (/^\d{4}$/.test(year || "")) d.docDate = year + ((d.docDate || "").slice(4) || "-01-01");
+    let tags = (d.tags || []).filter(t => !rm.includes(t)); for (const id of addIds) if (!tags.includes(id)) tags.push(id); d.tags = tags;
+    if (star !== KEEP) d.starred = star === "1";
+    if (inbox !== KEEP) d.inbox = inbox === "1";
+    if (note) d.notes = d.notes ? d.notes + "\n" + note : note;
+    if (JSON.stringify([d.type, d.corr, d.domain, d.docDate, d.tags, d.starred, d.inbox, d.notes]) !== before) { await persistDoc(d); n++; }
+  }
+  if (taxChanged) await persistTax();
+  closeModal(); endSelect(); render(); toast(n ? `عُدّلت ${n} وثيقة` : "لم يتغير شيء: كل الحقول على «دون تغيير»");
+}
+
 function openSyntax() {
   openModal(`<header><h2>صيغ البحث</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content"><p class="help" style="line-height:2.1">
   اكتب أي كلمات للبحث في العنوان واسم الملف والبيانات الوصفية والنص الكامل (بما فيه نص الوثائق الممسوحة ضوئياً). يجب أن تظهر كل الكلمات.<br>
@@ -1410,6 +1466,7 @@ async function importSync(file) {
 
 /* ============================== الأحداث ============================== */
 document.addEventListener("click", async e => {
+  const bt = e.target.closest("[data-bulkrm]"); if (bt) { S.bulkAdd = S.bulkAdd.filter(x => x !== bt.dataset.bulkrm); renderBulkTags(); return; }
   const t = e.target.closest("[data-sel],[data-open],[data-act],[data-viewmode],[data-tab],[data-manage],[data-settab],[data-delent],[data-rmtag],[data-view],[data-delview]");
   if (!t) return;
   const d = S.open ? allDocs().find(x => x.id === S.open) : null;
@@ -1444,6 +1501,8 @@ document.addEventListener("click", async e => {
     case "select-mode": if (S.selMode) endSelect(); else { S.selMode = true; S.picked.clear(); } renderMain(); break;
     case "pick-all": (S._rows || []).forEach(x => S.picked.add(x.id)); renderMain(); break;
     case "pick-none": S.picked.clear(); S.confirmBulk = null; renderMain(); break;
+    case "bulk-edit": openBulkEdit(); break;
+    case "bulk-apply": await applyBulkEdit(); break;
     case "bulk-trash": { const ds = pickedDocs(); await moveToTrash(ds); endSelect(); render(); toast(`نُقلت ${ds.length} وثيقة إلى سلة المحذوفات`); break; }
     case "bulk-restore": { const ds = pickedDocs(); await restoreDocs(ds); endSelect(); render(); toast(`استُعيدت ${ds.length} وثيقة`); break; }
     case "bulk-forever": { const n = S.picked.size; S.confirmBulk = { ids: [...S.picked], label: `حذف ${n} وثيقة وملفاتها الأصلية نهائياً؟ لا يمكن التراجع.` }; renderMain(); break; }
@@ -1499,6 +1558,7 @@ document.addEventListener("change", async e => {
   if (t.id === "set-ai") { S.tax.settings.autoAI = t.checked; await persistTax(); }
 });
 document.addEventListener("keydown", async e => {
+  if (e.target.id === "b-tagin" && e.key === "Enter") { e.preventDefault(); const v = e.target.value.trim(); if (v && !S.bulkAdd.includes(v)) S.bulkAdd.push(v); e.target.value = ""; renderBulkTags(); return; }
   if (e.target.id === "f-tagin" && e.key === "Enter") {
     e.preventDefault(); const v = e.target.value.trim(); const d = allDocs().find(x => x.id === S.open); if (!v || !d) return;
     let tg = S.tax.tags.find(x => norm(x.name) === norm(v)); if (!tg) { tg = E(v, "", "auto"); S.tax.tags.push(tg); await persistTax(); }
