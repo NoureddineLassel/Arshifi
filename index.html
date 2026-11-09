@@ -179,6 +179,66 @@ tr.picked td{background:var(--accent-2)}
 .selbar{position:sticky;top:calc(63px + env(safe-area-inset-top,0px));z-index:20;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;margin-bottom:12px;box-shadow:var(--shadow);font-size:13px}
 .selbar b{margin-left:auto}
 .trash-note{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
+.promo-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.promo-head h2{font-family:var(--f-display);font-size:26px;margin:0;color:var(--accent)}
+.promo-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.promo-ctrl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.promo-ctrl .field span{font-size:12px;color:var(--muted)}
+.promo-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px}
+.pmeter{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.pmeter .pm-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.pmeter .pm-top span{font-weight:600}
+.pmeter .pm-top b{font-size:24px;font-family:var(--f-display)}
+.pmeter .pm-top b small{font-size:13px;color:var(--muted)}
+.pmeter>small{color:var(--warn);font-size:12px}
+.pmeter.ok>small{color:var(--ok)}
+.pm-bar{height:8px;background:var(--sunk);border-radius:8px;overflow:hidden}
+.pm-bar i{display:block;height:100%;background:var(--warn);border-radius:8px}
+.pmeter.ok .pm-bar i{background:var(--ok)}
+.pmeter.verdict p{margin:0;font-size:12.5px;color:var(--warn)}
+.pmeter.verdict.ok{border-color:var(--ok)}
+.pmeter.verdict.ok p{color:var(--ok)}
+.promo-checks{list-style:none;margin:0 0 12px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 16px}
+.promo-checks li{display:flex;gap:8px;align-items:flex-start;font-size:13px}
+.promo-checks li small{display:block;color:var(--muted);font-size:11.5px}
+.promo-checks .ck{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;flex:none;font-weight:700}
+.promo-checks .ok .ck{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.promo-checks .no .ck{background:var(--warn-bg);color:var(--warn)}
+.promo-gaps{display:flex;flex-direction:column;gap:6px;background:var(--warn-bg);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:13px}
+.promo-gaps .chip{margin:2px}
+.promo-sugg{border:1px solid var(--accent);background:var(--accent-2);border-radius:12px;padding:10px 12px;margin-bottom:14px}
+.ps-head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.ps-list{display:flex;flex-direction:column;gap:6px;max-height:340px;overflow-y:auto}
+.ps-item{display:flex;gap:8px;align-items:center;background:var(--surface);border-radius:8px;padding:5px 8px;flex-wrap:wrap}
+.ps-item img{width:30px;height:38px;object-fit:cover;object-position:top;border-radius:3px;border:1px solid var(--line)}
+.ps-item>span{flex:1 1 200px;min-width:0;font-size:12.5px}
+.ps-item small{display:block;color:var(--muted)}
+.ps-item select{max-width:230px}
+.promo-sec{margin-bottom:18px}
+.promo-sec h3{font-family:var(--f-display);font-size:19px;margin:6px 0;display:flex;justify-content:space-between;gap:8px;border-bottom:2px solid var(--line);padding-bottom:6px}
+.promo-sec h3 span{color:var(--warn)} .promo-sec h3 span.ok{color:var(--ok)}
+.promo-sec h4{font-size:13.5px;color:var(--muted);margin:12px 0 6px}
+.pitems{display:flex;flex-direction:column;gap:6px}
+.pitem{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.pitem:not(.has){opacity:.85}
+.pi-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pi-head b{font-size:13.5px} .pi-head small{display:block;color:var(--muted);font-size:11.5px}
+.pi-pts{font-family:var(--f-display);font-size:18px;color:var(--accent);white-space:nowrap}
+.pi-pts small{font-size:10px;background:var(--warn-bg);color:var(--warn);border-radius:4px;padding:0 4px;font-family:var(--f-body)}
+.pi-add{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.pi-add .btn{height:26px;font-size:12px;color:var(--muted)}
+.pentry{display:flex;gap:8px;align-items:center;border-top:1px dashed var(--line);padding:6px 0;flex-wrap:wrap}
+.pentry.excluded .pe-doc,.pentry.excluded .pe-title{opacity:.6}
+.pe-doc{display:flex;gap:8px;align-items:center;border:0;background:none;text-align:right;padding:0;flex:1 1 220px;min-width:0;font-size:12.5px;font-weight:600;color:var(--ink)}
+.pe-doc img{width:28px;height:36px;object-fit:cover;object-position:top;border-radius:3px;border:1px solid var(--line);flex:none}
+.pe-doc small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.pe-title{flex:1 1 220px;min-width:0;height:30px}
+.pe-ctrl{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.pe-ctrl .sel{height:28px;font-size:12px}
+.pqty{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--muted)} .pqty input{width:56px}
+.pck{display:flex;gap:4px;align-items:center;font-size:12px;color:var(--muted);white-space:nowrap}
+.pe-pts{font-weight:700;color:var(--accent);min-width:44px;text-align:left}
+.pe-pts small{font-weight:400;color:var(--warn);font-size:11px}
 .empty{border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;color:var(--muted);background:var(--surface)}
 .empty h3{font-family:var(--f-display);color:var(--ink);font-size:20px;margin:0 0 6px}
 .more{display:flex;justify-content:center;margin-top:18px}
@@ -331,7 +391,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.5.0";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
@@ -936,6 +996,7 @@ function renderSide() {
     ${navBtn("inbox", null, "صندوق الوارد", null, ICONS.inbox).replace("</button>", (inboxN ? `<span class="pill-warn">${inboxN}</span>` : `<span class="cnt">0</span>`) + "</button>")}
     ${navBtn("recent", null, "أضيفت حديثاً", count(d => Date.now() - new Date(d.added).getTime() < 14 * 864e5), ICONS.recent)}
     ${navBtn("starred", null, "المفضلة", count(d => d.starred), ICONS.star)}
+    ${navBtn("promo", null, "بروفيسورا", null, ICON_PROMO).replace("</button>", (() => { try { const R = promoCompute(); return R.p.entries.length ? `<span class="${R.ready ? "cnt" : "pill-warn"}" title="البيداغوجيا ${fmtPts(R.sec.ped)} · البحث ${fmtPts(R.sec.res)}">${R.ready ? "✓" : fmtPts(R.sec.ped + R.sec.res)}</span>` : ""; } catch (e) { return ""; } })() + "</button>")}
     ${navBtn("untagged", null, "بحاجة إلى تصنيف", count(d => !d.domain || !d.type), ICONS.todo)}
     ${navBtn("trash", null, "سلة المحذوفات", docs.filter(d => d.trashed).length, ICONS.trash)}
   </ul>`;
@@ -965,9 +1026,10 @@ function renderSide() {
 const PAGE = 60;
 function selTitle() {
   const s = S.sel;
-  return { trash: "سلة المحذوفات", all: "كل الوثائق", inbox: "صندوق الوارد", recent: "أضيفت حديثاً", starred: "المفضلة", untagged: "بحاجة إلى تصنيف", domain: domainPath(s.id), type: entName("types", s.id), corr: entName("corrs", s.id), tag: "وسم: " + entName("tags", s.id), year: "سنة " + s.id }[s.kind] || "";
+  return { promo: "بروفيسورا", trash: "سلة المحذوفات", all: "كل الوثائق", inbox: "صندوق الوارد", recent: "أضيفت حديثاً", starred: "المفضلة", untagged: "بحاجة إلى تصنيف", domain: domainPath(s.id), type: entName("types", s.id), corr: entName("corrs", s.id), tag: "وسم: " + entName("tags", s.id), year: "سنة " + s.id }[s.kind] || "";
 }
 function renderMain() {
+  if (S.sel.kind === "promo") { $("#main").innerHTML = renderPromo(); return; }
   const { rows, ms, pq } = runSearch(); const terms = pq.terms;
   const shown = rows.slice(0, S.page * PAGE);
   let h = "";
@@ -1027,6 +1089,293 @@ function card(d, terms) {
 }
 function render() { renderSide(); renderMain(); if (S.open) renderDrawer(); renderQueue(); }
 
+/* ============================== بروفيسورا: ملف الترقية إلى رتبة أستاذ التعليم العالي ============================== */
+// شبكة التقييم كما وردت في «شروط وشبكة التقييم للترقية إلى رتبة أستاذ التعليم العالي — الدورة 49 للجنة الجامعية الوطنية».
+// unit: البند يُحسب بالكمية (سداسي، سنة، مذكرة…) · cap: سقف النقاط الأساسية · eng/idx/theme: نقاط إضافية لكل عنصر
+// pub: تطبَّق عليه قاعدة ترتيب المؤلف (100٪ / 50٪ / 25٪) · opts: خيارات بنقاط مختلفة (صنف المجلة، نوع البراءة)
+const PROMO_GRID = {
+  session: "الدورة التاسعة والأربعون (49) للجنة الجامعية الوطنية",
+  sections: [
+    { id: "ped", name: "الأعمال البيداغوجية", groups: [
+      { name: "1-1 التعليم", items: [
+        { id: "cours", name: "الدروس (المحاضرات)", pts: 6, unit: "سداسي", cap: 60, eng: 10, rule: "6 نقاط / السداسي (60 نقطة على الأكثر)، 10 نقاط إضافية للدروس بالإنجليزية", kw: ["جدول التوقيت", "شهاده تدريس", "محاضره+سداسي", "مقياس+محاضره"], dom: ["المقاييس والمحاضرات"], types: ["محاضرة / درس"] },
+        { id: "td", name: "الأعمال الموجهة", pts: 1.5, unit: "سداسي", cap: 15, rule: "1.5 نقطة / السداسي (15 نقطة على الأكثر)", kw: ["اعمال موجهه"] },
+        { id: "tp", name: "الأعمال التطبيقية", pts: 1.5, unit: "سداسي", cap: 15, rule: "1.5 نقطة / السداسي (15 نقطة على الأكثر)", kw: ["اعمال تطبيقيه"] },
+        { id: "online", name: "مواد عبر الخط مصادق عليها", pts: 30, eng: 10, rule: "30 نقطة لكل مادة (دروس، أعمال موجهة أو تطبيقية) مصادق عليها من هيئات التدريس عن بعد والهيئات العلمية، 10 نقاط إضافية بالإنجليزية", kw: ["عبر الخط", "moodle", "مودل", "التعليم عن بعد"] },
+      ] },
+      { name: "1-2 النشاطات البيداغوجية", items: [
+        { id: "polycop", name: "مطبوعة دروس مصادق عليها وموضوعة عبر الخط", pts: 12, eng: 10, pub: true, rule: "12 نقطة / مطبوعة، 10 نقاط إضافية للمطبوعات بالإنجليزية", kw: ["مطبوعه"] },
+        { id: "pedbook", name: "مؤلف بيداغوجي منشور", pts: 30, eng: 10, pub: true, rule: "30 نقطة، 10 نقاط إضافية للمؤلفات البيداغوجية بالإنجليزية", kw: ["مؤلف بيداغوجي", "كتاب بيداغوجي"] },
+        { id: "tutor", name: "القيام بالوصاية (مصادق عليها من رئيس القسم)", pts: 3, unit: "سنة", cap: 15, rule: "3 نقاط / السنة (15 نقطة على الأكثر)", kw: ["الوصايه", "استاذ وصي"] },
+        { id: "interns", name: "متابعة الطلبة المتربصين في المؤسسة", pts: 6, unit: "سنة", cap: 30, rule: "6 نقاط / السنة (30 نقطة على الأكثر)", kw: ["متربص", "تربص ميداني"] },
+        { id: "projtutor", name: "تجسيد مشروع تحت الوصاية (علاقة جامعة–مؤسسة)", pts: 5, rule: "5 نقاط، مصادق عليه من نائب المدير أو المدير المساعد المكلف بالعلاقات الخارجية", kw: ["علاقه جامعه+مؤسسه"] },
+        { id: "pedteams", name: "تنشيط الفرق البيداغوجية (ندوات، ورشات، رئاسة اللجان البيداغوجية…)", pts: 5, rule: "5 نقاط، مصادق عليها من رئيس القسم", kw: ["فرقه بيداغوجيه", "رئيس اللجنه البيداغوجيه", "مسؤول الميدان", "مسؤول التخصص"], dom: ["اللجان البيداغوجية"] },
+        { id: "master", name: "تأطير مذكرات ماستر (أو ما يعادلها)", pts: 2, unit: "مذكرة", cap: 20, rule: "2 نقطة / ماستر (20 نقطة على الأكثر)", kw: ["مذكره ماستر", "شهاده الماستر", "مذكره تخرج+ماستر"], dom: ["مذكرات الماستر"] },
+        { id: "masterstartup", name: "تأطير مذكرات ماستر بصيغة شهادة–مؤسسة ناشئة", pts: 15, unit: "مذكرة", cap: 45, rule: "15 نقطة / ماستر (45 نقطة على الأكثر)", kw: ["شهاده+مؤسسه ناشئه"] },
+        { id: "englishplat", name: "المشاركة في منظومات تعلم الإنجليزية عبر الخط", pts: 6, unit: "سنة", cap: 30, rule: "6 نقاط / السنة (30 نقطة على الأكثر)", kw: ["تعليم اللغات", "تعلم اللغه الانجليزيه"] },
+      ] },
+    ] },
+    { id: "res", name: "نشاطات البحث", groups: [
+      { name: "2-1 النشر العلمي", items: [
+        { id: "art", name: "مقال منشور في مجلة علمية مصنفة", pub: true, opts: { "A+": { label: "صنف أ+", pts: 160 }, "A": { label: "صنف أ", pts: 80 }, "B": { label: "صنف ب", pts: 40 }, "C": { label: "صنف ج", pts: 20 } }, optCap: { C: 40 }, engOpt: { C: 10 }, journal: true, rule: "أ+: 160 · أ: 80 · ب: 40 · ج: 20 نقطة (40 على الأكثر لمقالات ج، 10 نقاط إضافية للمقال ج بالإنجليزية)", kw: ["issn", "doi", "الكلمات المفتاحيه", "keywords"], dom: ["المقالات المنشورة"], types: ["مقال علمي"] },
+        { id: "book", name: "مؤلف علمي في التخصص", pts: 40, eng: 20, pub: true, rule: "40 نقطة / مؤلف، 20 نقطة إضافية للمؤلف بالإنجليزية", kw: ["مؤلف علمي", "isbn+كتاب"] },
+        { id: "chapter", name: "فصل في كتاب علمي", pts: 10, eng: 5, pub: true, rule: "10 نقاط، 5 نقاط إضافية للفصل بالإنجليزية", kw: ["فصل في كتاب", "chapter"] },
+        { id: "confint", name: "مداخلة دولية", pts: 20, cap: 40, idx: 5, pub: true, rule: "20 نقطة / المداخلة (40 على الأكثر)، +5 نقاط للمداخلة المنشورة في Proceeding مفهرس في WoS أو Scopus", kw: ["مداخله+دولي", "communication+international", "ملتقى دولي", "مؤتمر دولي"], dom: ["الملتقيات والمؤتمرات"] },
+        { id: "confnat", name: "مداخلة وطنية", pts: 10, cap: 20, pub: true, rule: "10 نقاط / المداخلة (20 على الأكثر)", kw: ["مداخله+وطني", "ملتقى وطني", "يوم دراسي"] },
+        { id: "patent", name: "براءة اختراع", opts: { pct: { label: "PCT/OMPI مستقلة", pts: 80 }, ompi: { label: "OMPI/PCT مسجلة", pts: 60 }, inapi: { label: "OMPI أو INAPI", pts: 55 } }, rule: "مستقلة 80 · مسجلة 60 · INAPI أو OMPI 55 نقطة (البراءة الواحدة تُحتسب مرة واحدة)", kw: ["براءه اختراع", "brevet", "inapi"] },
+      ] },
+      { name: "2-2 التكوين والتأطير", items: [
+        { id: "doctrain", name: "المشاركة في التكوين في الدكتوراه", pts: 15, rule: "15 نقطة، مصادق عليها من مسؤول التكوين ونائب العميد لما بعد التدرج", kw: ["التكوين في الدكتوراه", "تكوين الدكتوراه"] },
+        { id: "docsup", name: "تأطير أطروحة دكتوراه ومناقشتها", pts: 40, unit: "أطروحة", eng: 10, rule: "40 نقطة / دكتوراه مناقشة، 10 نقاط إضافية للأطروحة بالإنجليزية", kw: ["اطروحه+مشرفا", "اطروحه+مقررا", "دكتوراه+مناقشه+مشرف"], dom: ["أطروحات الدكتوراه"] },
+        { id: "doccosup", name: "إشراف مشترك على أطروحة دكتوراه ومناقشتها", pts: 15, unit: "أطروحة", eng: 10, rule: "15 نقطة / دكتوراه مناقشة، 10 نقاط إضافية بالإنجليزية", kw: ["مشرف مساعد", "اشراف مشترك", "co-direct"] },
+        { id: "mag", name: "تأطير ومناقشة مذكرات ماجستير", pts: 10, unit: "مذكرة", rule: "10 نقاط / مذكرة مناقشة", kw: ["ماجستير"] },
+        { id: "star5", name: "المشاركة في تكوين طلبة خمس نجوم", pts: 5, unit: "طالب", rule: "5 نقاط / طالب", kw: ["خمس نجوم", "5 نجوم"] },
+      ] },
+      { name: "2-3 النشاط العلمي والمشاريع", items: [
+        { id: "org", name: "المشاركة في تنظيم تظاهرة علمية", pts: 5, cap: 10, rule: "5 نقاط / المشاركة (10 على الأكثر)", kw: ["لجنه تنظيميه", "اللجنه التنظيميه", "رئيس الملتقى"] },
+        { id: "expert", name: "المشاركة في النشاط العلمي (الخبرة، التحكيم…)", pts: 5, cap: 10, rule: "5 نقاط / المشاركة (10 على الأكثر)", kw: ["تحكيم", "تقرير خبره", "خبير"], dom: ["التحكيم والخبرة"] },
+        { id: "intlcoop", name: "مشاريع تعاون دولية", pts: 5, cap: 10, rule: "5 نقاط / المشاركة (10 على الأكثر)", kw: ["تعاون دولي", "erasmus", "مشروع دولي"] },
+        { id: "research", name: "المشاركة في نشاطات البحث (PRFU، PNR، مخبر البحث…)", pts: 5, cap: 10, theme: 15, rule: "5 نقاط / المشاركة (10 على الأكثر)، 15 نقطة إضافية لكل مشروع حول الأمن الغذائي أو الصحة أو الأمن الطاقوي", kw: ["prfu", "pnr", "مشروع بحث", "عضو في مخبر"], dom: ["مشاريع البحث"] },
+        { id: "bureau", name: "المشاركة في نشاطات مكاتب الدراسات والفروع الاقتصادية", pts: 10, cap: 10, rule: "10 نقاط على الأكثر، مصادق عليها من رئيس المكتب أو الفرع", kw: ["مكتب الدراسات", "فرع اقتصادي"] },
+        { id: "startup", name: "المشاركة في إنشاء مؤسسة ناشئة موسومة أو مشروع مبتكر", pts: 20, rule: "20 نقطة / المشاركة", kw: ["مؤسسه ناشئه موسومه", "مشروع مبتكر", "label startup"] },
+        { id: "family", name: "المساهمة في الأسرة الجامعية (هيئات علمية وبيداغوجية، مشاريع…)", pts: 5, cap: 10, rule: "5 نقاط / المشاركة (10 على الأكثر)", kw: ["عضو المجلس العلمي", "اللجنه العلميه", "هيئه علميه", "عضويه+مجلس"], dom: ["المجلس العلمي"] },
+        { id: "society", name: "المساهمة في المجتمع (نشر الثقافة العلمية في التخصص)", pts: 5, cap: 10, rule: "5 نقاط / المشاركة (10 على الأكثر)", kw: ["الثقافه العلميه", "محاضره عامه", "حصه اذاعيه", "حصه تلفزيونيه"] },
+      ] },
+    ] },
+  ],
+  fields: {
+    shs: { label: "العلوم الإنسانية والاجتماعية", minPed: 80, minRes: 120, mandatory: ["A+", "A", "B", "C"] },
+    st: { label: "العلوم والتكنولوجيا", minPed: 80, minRes: 230, mandatory: ["A+", "A", "B"] },
+  },
+};
+const PROMO_ITEMS = PROMO_GRID.sections.flatMap(s => s.groups.flatMap(g => g.items.map(it => ({ ...it, sec: s.id, group: g.name }))));
+const promoItem = id => PROMO_ITEMS.find(x => x.id === id);
+const RANKS = { "1": { label: "المؤلف الأول / الوحيد", f: 1 }, "2": { label: "المؤلف الثاني", f: .5 }, "3": { label: "الثالث فأكثر", f: .25 }, "alpha": { label: "ترتيب أبجدي (100٪)", f: 1 } };
+const P = () => {
+  const p = (S.tax.promo ||= {}); p.field ||= "shs"; p.entries ||= []; p.dismissed ||= []; return p;
+};
+const fmtPts = n => String(Math.round(n * 100) / 100);
+const savePromo = debounce(() => persistTax(), 400);
+
+function promoEntryPts(e, live) {
+  const it = promoItem(e.item); if (!it) return { base: 0, bonus: 0, why: "بند غير معروف" };
+  if (e.docId && !live.has(e.docId)) return { base: 0, bonus: 0, why: "الوثيقة محذوفة أو في السلة" };
+  if (e.pred) return { base: 0, bonus: 0, why: "مجلة مفترسة أو غير معترف بها: لا تُحتسب" };
+  if (it.opts && !it.opts[e.opt]) return { base: 0, bonus: 0, why: it.id === "art" ? "حدّد صنف المجلة" : "حدّد النوع" };
+  const unitPts = it.opts ? it.opts[e.opt].pts : it.pts;
+  const qty = it.unit ? Math.max(0, +e.qty || 0) : 1;
+  const f = it.pub ? (RANKS[e.rank || "1"]?.f ?? 1) : 1;
+  let bonus = 0;
+  if (e.english) bonus += (it.engOpt ? (it.engOpt[e.opt] || 0) : (it.eng || 0)) * (it.unit ? qty : 1);
+  if (e.indexed && it.idx) bonus += it.idx;
+  if (e.theme && it.theme) bonus += it.theme;
+  return { base: unitPts * qty * f, bonus, why: "" };
+}
+function promoCompute() {
+  const p = P(); const field = PROMO_GRID.fields[p.field] || PROMO_GRID.fields.shs;
+  const live = new Map(liveDocs().map(d => [d.id, d]));
+  const items = {}; const sec = { ped: 0, res: 0 };
+  for (const it of PROMO_ITEMS) {
+    const rows = p.entries.filter(e => e.item === it.id).map(e => ({ e, ...promoEntryPts(e, live) }));
+    let base = 0, bonus = 0; const byOpt = {};
+    for (const r of rows) { bonus += r.bonus; if (it.optCap && it.optCap[r.e.opt] !== undefined) byOpt[r.e.opt] = (byOpt[r.e.opt] || 0) + r.base; else base += r.base; }
+    const raw = base + Object.values(byOpt).reduce((a, b) => a + b, 0);
+    if (it.cap !== undefined) base = Math.min(base, it.cap);
+    for (const [k, v] of Object.entries(byOpt)) base += Math.min(v, it.optCap[k]);
+    const total = base + bonus;
+    items[it.id] = { rows, total, raw: raw + bonus, capped: raw > base + 1e-9, count: rows.reduce((a, r) => a + (it.unit ? (+r.e.qty || 0) : 1), 0) };
+    sec[it.sec] += total;
+  }
+  // شروط القبول
+  const ok = r => !r.why;
+  const arts = items.art.rows.filter(ok).map(r => r.e);
+  const lead = e => ["1", "2", "alpha"].includes(e.rank || "1"), main = e => ["1", "alpha"].includes(e.rank || "1");
+  const n = (cls, pred) => arts.filter(e => cls.includes(e.opt) && pred(e)).length;
+  const pubOK = p.field === "st" ? (n(["A+"], lead) >= 1 || (n(["A"], lead) >= 1 && n(["B"], lead) >= 2)) : (n(["A+", "A"], lead) >= 1 || (n(["B"], lead) >= 1 && n(["C"], lead) >= 1) || n(["C"], main) >= 2);
+  const cnt = id => items[id].rows.filter(ok).reduce((a, r) => a + (promoItem(id).unit ? (+r.e.qty || 0) : 1), 0);
+  const supOK = cnt("docsup") >= 1 || cnt("doccosup") >= 1 || cnt("mag") >= 2 || cnt("master") + cnt("masterstartup") >= 4;
+  const mandOK = arts.some(e => field.mandatory.includes(e.opt));
+  const cArts = arts.filter(e => e.opt === "C"); const keys = cArts.map(e => norm((e.journal || "") + "|" + (e.issue || "")).trim()).filter(k => k !== "|");
+  const cDup = keys.length !== new Set(keys).size;
+  const cMissing = cArts.some(e => !e.journal || !e.issue);
+  let years = null; if (p.mcaDate) years = (Date.now() - Date.parse(p.mcaDate)) / (365.25 * 864e5);
+  const adminOK = years !== null && years >= 5;
+  const ready = adminOK && pubOK && supOK && mandOK && !cDup && sec.ped >= field.minPed && sec.res >= field.minRes;
+  return { p, field, items, sec, pubOK, supOK, mandOK, cDup, cMissing, years, adminOK, ready, live };
+}
+
+/* ---------- الجلب التلقائي من الأرشيف ---------- */
+const kwHit = (nText, kw) => kw.split("+").every(part => nText.includes(norm(part)));
+function promoGuess(d) {
+  const nAll = d._n.title + " " + d._n.file + " " + d._n.text.slice(0, 20000);
+  const dname = entName("domains", d.domain), tname = entName("types", d.type);
+  if (/شخصي|مالية|وثائق شخصية/.test(domainPath(d.domain))) return null;
+  let best = null, bs = 0;
+  for (const it of PROMO_ITEMS) {
+    let s = 0;
+    if (it.dom?.includes(dname)) s += 3;
+    if (it.types?.includes(tname)) s += 2;
+    for (const k of it.kw || []) if (kwHit(nAll, k)) s += norm(k).length > 6 ? 1.5 : 1;
+    if (s > bs) { bs = s; best = it; }
+  }
+  return bs >= 1.5 ? best : null;
+}
+function guessArticleClass(d) {
+  const tagNames = (d.tags || []).map(t => norm(entName("tags", t)).replace(/\s+/g, ""));
+  const map = { "a+": "A+", "ا+": "A+", "صنفا+": "A+", "a": "A", "ا": "A", "صنفا": "A", "b": "B", "ب": "B", "صنفب": "B", "c": "C", "ج": "C", "صنفج": "C" };
+  for (const t of tagNames) if (map[t]) return { cls: map[t], sure: true };
+  const t = d._n.text.slice(0, 4000);
+  let m = t.match(/صنف\s*\(?\s*(ا\+|ا|ب|ج)\s*\)?/) || t.match(/categor(?:y|ie)\s*(a\+|a|b|c)\b/);
+  if (m) return { cls: { "ا+": "A+", "ا": "A", "ب": "B", "ج": "C", "a+": "A+", "a": "A", "b": "B", "c": "C" }[m[1]], sure: true };
+  if (t.includes("asjp")) return { cls: "C", sure: false };
+  if (t.includes("scopus") || t.includes("web of science")) return { cls: "", sure: false };
+  return { cls: "", sure: false };
+}
+function promoSuggestions() {
+  const p = P(); const used = new Set(p.entries.map(e => e.docId).filter(Boolean)); const dis = new Set(p.dismissed);
+  const out = [];
+  for (const d of liveDocs()) { if (used.has(d.id) || dis.has(d.id) || d.demo) continue; const it = promoGuess(d); if (it) out.push({ d, it }); }
+  return out;
+}
+function newEntry(item, d) {
+  const it = promoItem(item); const e = { id: uid(), item, docId: d?.id || null, title: d ? "" : "", qty: it.unit ? 1 : undefined, rank: it.pub ? "1" : undefined };
+  if (d && item === "art") { const g = guessArticleClass(d); if (g.cls) { e.opt = g.cls; e.guess = !g.sure; } }
+  if (it.journal && d) e.journal = "";
+  return e;
+}
+
+/* ---------- العرض ---------- */
+const ICON_PROMO = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="M6 10.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-5.5"/><path d="M22 8v6"/></svg>';
+function meter(label, val, min) {
+  const pct = Math.min(100, val / min * 100); const ok = val >= min;
+  return `<div class="pmeter ${ok ? "ok" : ""}"><div class="pm-top"><span>${label}</span><b class="num">${fmtPts(val)} <small>/ ${min}</small></b></div><div class="pm-bar"><i style="width:${pct}%"></i></div><small>${ok ? "✓ بلغ الحد الأدنى" + (val > min ? ` (+${fmtPts(val - min)})` : "") : `ينقص ${fmtPts(min - val)} نقطة`}</small></div>`;
+}
+function check(ok, label, detail) { return `<li class="${ok ? "ok" : "no"}"><span class="ck">${ok ? "✓" : "✗"}</span><span><b>${label}</b>${detail ? `<small>${detail}</small>` : ""}</span></li>`; }
+function gapHints(R, secId, need) {
+  const opts = [];
+  const room = it => it.cap === undefined ? Infinity : Math.max(0, it.cap - Math.min(it.cap, R.items[it.id].raw));
+  for (const it of PROMO_ITEMS.filter(x => x.sec === secId)) {
+    if (it.opts) { for (const [k, o] of Object.entries(it.opts)) { if (it.id === "patent") continue; const left = it.optCap?.[k] !== undefined ? Math.max(0, it.optCap[k] - R.items[it.id].rows.filter(r => r.e.opt === k).reduce((a, r) => a + r.base, 0)) : Infinity; if (left > 0) opts.push([`${it.name.replace("منشور في مجلة علمية مصنفة", "")} ${o.label}`, Math.min(o.pts, left)]); } continue; }
+    const r = room(it); if (r > 0) opts.push([it.name, Math.min(it.pts, r)]);
+  }
+  opts.sort((a, b) => b[1] - a[1]);
+  return opts.slice(0, 4).map(([n, v]) => `<span class="chip">${esc(n)} <b class="num">+${fmtPts(v)}</b></span>`).join("");
+}
+function renderPromo() {
+  const R = promoCompute(); const p = R.p; const f = R.field;
+  const sugg = promoSuggestions();
+  let h = `<div class="promo-head"><div><h2>بروفيسورا</h2><p>ملف الترقية إلى رتبة أستاذ التعليم العالي · ${esc(PROMO_GRID.session)}</p></div>
+    <div class="promo-ctrl">
+      <label class="field" style="min-width:200px"><span>ميدان التكوين</span><select id="promo-field" class="sel">${Object.entries(PROMO_GRID.fields).map(([k, v]) => `<option value="${k}" ${p.field === k ? "selected" : ""}>${v.label}</option>`).join("")}</select></label>
+      <label class="field"><span>تاريخ التعيين أستاذاً محاضراً قسم «أ»</span><input id="promo-mca" type="date" class="sel" value="${esc(p.mcaDate || "")}"></label>
+      <button class="btn" data-act="promo-export">تصدير الملف</button>
+    </div></div>`;
+  h += `<div class="promo-sum">
+    ${meter("الأعمال البيداغوجية", R.sec.ped, f.minPed)}
+    ${meter("نشاطات البحث", R.sec.res, f.minRes)}
+    <div class="pmeter verdict ${R.ready ? "ok" : ""}"><div class="pm-top"><span>المجموع</span><b class="num">${fmtPts(R.sec.ped + R.sec.res)}</b></div><p>${R.ready ? "الملف مستوفٍ لكل الشروط والحد الأدنى من النقاط حسب هذه الشبكة." : "الملف غير مستوفٍ بعد. راجع الشروط أدناه."}</p></div>
+  </div>
+  <ul class="promo-checks">
+    ${check(R.adminOK, "الأقدمية: 5 سنوات خدمة فعلية بصفة أستاذ محاضر قسم «أ»", R.years === null ? "أدخل تاريخ التعيين أعلاه" : `${fmtPts(Math.floor(R.years * 10) / 10)} سنة`)}
+    ${check(R.pubOK, "الحد الأدنى للنشر (شرط القبول العلمي)", p.field === "st" ? "مقال أ+ مؤلفاً رئيسياً أو ثانياً، أو مقال أ ومقالان ب" : "مقال أ (مؤلفاً رئيسياً أو ثانياً)، أو مقال ب ومقال ج، أو مقالان ج مؤلفاً رئيسياً")}
+    ${check(R.supOK, "الحد الأدنى للتأطير", "أطروحة دكتوراه مناقشة (تأطير أو إشراف مشترك)، أو مذكرتا ماجستير، أو أربع مذكرات ماستر")}
+    ${check(R.mandOK, "نشر مقال إجباري", p.field === "st" ? "في مجلة مصنفة أ+ أو أ أو ب" : "في مجلة مصنفة أ أو ب أو ج")}
+    ${check(!R.cDup, "مقالات الصنف ج في مجلات وأعداد مختلفة", R.cDup ? "يوجد مقالان ج في المجلة والعدد نفسيهما" : R.cMissing ? "أدخل اسم المجلة والعدد لكل مقال ج للتحقق" : "")}
+  </ul>`;
+  const gaps = [];
+  if (R.sec.ped < f.minPed) gaps.push(`<div><b>لاستكمال البيداغوجيا (${fmtPts(f.minPed - R.sec.ped)} نقطة):</b> ${gapHints(R, "ped")}</div>`);
+  if (R.sec.res < f.minRes) gaps.push(`<div><b>لاستكمال البحث (${fmtPts(f.minRes - R.sec.res)} نقطة):</b> ${gapHints(R, "res")}</div>`);
+  if (gaps.length) h += `<div class="promo-gaps">${gaps.join("")}</div>`;
+  if (sugg.length) {
+    h += `<div class="promo-sugg"><div class="ps-head"><b>وُجدت ${sugg.length} وثيقة في أرشيفك تبدو مناسبة لملف الترقية</b><button class="btn small primary" data-act="promo-accept-all">إضافة الكل</button></div>
+      <div class="ps-list">${sugg.slice(0, 40).map(({ d, it }) => `<div class="ps-item">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span><b>${esc(d.title)}</b><small>← ${esc(it.name)}</small></span>
+        <select class="sel" data-sugitem="${d.id}" aria-label="البند">${PROMO_ITEMS.map(x => `<option value="${x.id}" ${x.id === it.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}</select>
+        <button class="btn small" data-act="promo-accept" data-doc="${d.id}">إضافة</button><button class="btn small ghost" data-act="promo-dismiss" data-doc="${d.id}" title="تجاهل">×</button></div>`).join("")}</div></div>`;
+  }
+  for (const s of PROMO_GRID.sections) {
+    const min = s.id === "ped" ? f.minPed : f.minRes;
+    h += `<section class="promo-sec"><h3>${s.id === "ped" ? "1" : "2"}. ${esc(s.name)} <span class="num ${R.sec[s.id] >= min ? "ok" : ""}">${fmtPts(R.sec[s.id])} / ${min}</span></h3>`;
+    for (const g of s.groups) {
+      h += `<h4>${esc(g.name)}</h4><div class="pitems">`;
+      for (const it of g.items) {
+        const I = R.items[it.id];
+        h += `<div class="pitem ${I.rows.length ? "has" : ""}"><div class="pi-head"><div><b>${esc(it.name)}</b><small>${esc(it.rule)}</small></div>
+          <span class="pi-pts num">${fmtPts(I.total)}${I.capped ? ` <small title="بلغ السقف">سقف</small>` : ""}</span></div>`;
+        for (const r of I.rows) h += entryRow(it, r, R.live);
+        h += `<div class="pi-add"><button class="btn small ghost" data-act="promo-add" data-item="${it.id}">+ وثيقة من الأرشيف</button><button class="btn small ghost" data-act="promo-manual" data-item="${it.id}">+ عنصر دون وثيقة</button></div></div>`;
+      }
+      h += `</div>`;
+    }
+    h += `</section>`;
+  }
+  h += `<p class="help">النقاط محسوبة آلياً حسب الشبكة الرسمية، والقرار النهائي للجنة الجامعية الوطنية. تحقق من صنف كل مجلة في القائمة الرسمية للمديرية العامة للبحث العلمي، ومن ترتيبك بين المؤلفين.</p>`;
+  return h;
+}
+function entryRow(it, r, live) {
+  const e = r.e; const d = e.docId ? live.get(e.docId) || S.docs.find(x => x.id === e.docId) : null;
+  const sel = (pf, options, val, label) => `<select class="sel" data-pe="${e.id}" data-pf="${pf}" aria-label="${label}">${options.map(([v, l]) => `<option value="${v}" ${String(val ?? "") === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const chk = (pf, label) => `<label class="pck"><input type="checkbox" data-pe="${e.id}" data-pf="${pf}" ${e[pf] ? "checked" : ""}> ${label}</label>`;
+  let ctrls = "";
+  if (it.opts) ctrls += sel("opt", [["", it.id === "art" ? "— الصنف —" : "— النوع —"], ...Object.entries(it.opts).map(([k, o]) => [k, `${o.label} (${o.pts})`])], e.opt, "الصنف") + (e.guess ? `<span class="pill-warn" title="مقترح من نص الوثيقة">مقترح، تحقق</span>` : "");
+  if (it.unit) ctrls += `<label class="pqty"><input type="number" min="0" step="1" class="sel" data-pe="${e.id}" data-pf="qty" value="${esc(e.qty ?? 1)}" aria-label="العدد"> ${esc(it.unit)}</label>`;
+  if (it.pub) ctrls += sel("rank", Object.entries(RANKS).map(([k, v]) => [k, v.label]), e.rank || "1", "ترتيب المؤلف");
+  if (it.eng || it.engOpt) ctrls += chk("english", "بالإنجليزية");
+  if (it.idx) ctrls += chk("indexed", "Proceeding مفهرس WoS/Scopus");
+  if (it.theme) ctrls += chk("theme", "أمن غذائي / صحة / أمن طاقوي");
+  if (it.journal) ctrls += `<input class="sel" placeholder="المجلة" data-pe="${e.id}" data-pf="journal" value="${esc(e.journal || "")}" style="width:150px"><input class="sel" placeholder="العدد" data-pe="${e.id}" data-pf="issue" value="${esc(e.issue || "")}" style="width:80px">` + chk("pred", "مجلة مفترسة");
+  const title = d ? `<button class="pe-doc" data-open="${d.id}">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span>${esc(d.title)}<small class="num">${esc(fmtDate(d.docDate))}${d.trashed ? " · في السلة" : ""}</small></span></button>`
+    : `<input class="sel pe-title" placeholder="وصف العنصر (مثال: السداسي الأول 2023/2024)" data-pe="${e.id}" data-pf="title" value="${esc(e.title || "")}">`;
+  return `<div class="pentry ${r.why ? "excluded" : ""}">${title}<div class="pe-ctrl">${ctrls}</div>
+    <span class="pe-pts num" title="${esc(r.why)}">${r.why ? `<small>${esc(r.why)}</small>` : fmtPts(r.base + r.bonus)}</span><button class="btn small ghost" data-act="promo-rm" data-entry="${e.id}" aria-label="إزالة من الملف">×</button></div>`;
+}
+function openPromoPicker(item) {
+  const it = promoItem(item); S.promoPick = item;
+  const used = new Set(P().entries.filter(e => e.item === item).map(e => e.docId));
+  const docs = liveDocs().filter(d => !d.demo && !used.has(d.id));
+  const scored = docs.map(d => [d, promoGuess(d)?.id === item ? 1 : 0]).sort((a, b) => b[1] - a[1] || (b[0].docDate || "").localeCompare(a[0].docDate || ""));
+  openModal(`<header><h2>إضافة إلى: ${esc(it.name)}</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content">
+    <input id="pp-q" class="sel" style="width:100%;height:38px;margin-bottom:10px" placeholder="ابحث في عناوين الوثائق…" autocomplete="off">
+    <div class="simlist" id="pp-list">${scored.map(([d, s]) => `<button class="sim" data-act="promo-pick" data-doc="${d.id}" data-q="${esc(d._n.title + " " + d._n.meta)}">${d.thumb ? `<img src="${d.thumb}" alt="">` : ""}<span><b style="font-size:13px">${esc(d.title)}</b><br><span style="font-size:12px;color:var(--muted)">${esc(entName("types", d.type) || "")} · ${esc(fmtDate(d.docDate))}</span></span>${s ? `<span class="score">مقترحة</span>` : ""}</button>`).join("") || `<p class="note">لا توجد وثائق في الأرشيف بعد.</p>`}</div></div>`);
+  setTimeout(() => $("#pp-q")?.focus(), 30);
+}
+
+/* ---------- التصدير: ملف ZIP منظّم حسب الشبكة + جدول النقاط ---------- */
+let promoPkg = null;
+async function buildPromoExport() {
+  const R = promoCompute();
+  openModal(`<header><h2>تصدير ملف الترقية</h2><button class="btn ghost icon-btn" data-act="close-modal" aria-label="إغلاق">×</button></header><div class="content"><p class="help" id="pe-status">جارٍ تجهيز الملف…</p></div>`);
+  try {
+    await loadScript(LIBS.jszip); const zip = new window.JSZip(); const root = "ملف الترقية - بروفيسورا";
+    const rows = [["المحور", "الفرع", "البند", "الوثيقة / العنصر", "التفاصيل", "النقاط"]]; let files = 0, missing = 0;
+    for (const [si, s] of PROMO_GRID.sections.entries()) for (const g of s.groups) for (const it of g.items) {
+      const I = R.items[it.id]; let k = 0;
+      for (const r of I.rows) {
+        const e = r.e; const d = e.docId ? R.live.get(e.docId) : null;
+        const det = [it.opts && e.opt ? it.opts[e.opt].label : "", it.unit ? `${e.qty || 0} ${it.unit}` : "", it.pub ? RANKS[e.rank || "1"].label : "", e.english ? "بالإنجليزية" : "", e.indexed ? "مفهرس" : "", e.journal ? `${e.journal} ع${e.issue || ""}` : "", r.why].filter(Boolean).join(" · ");
+        rows.push([s.name, g.name, it.name, d ? d.title : (e.title || "عنصر دون وثيقة"), det, fmtPts(r.base + r.bonus)]);
+        if (d?.file) {
+          try { const b = await S.store.getFile(d.file); if (b) { k++; const ext = (d.filename.split(".").pop() || "pdf").toLowerCase(); zip.file(`${root}/${si + 1}- ${safeName(s.name)}/${safeName(g.name)}/${safeName(it.name).slice(0, 60)}/${String(k).padStart(2, "0")} - ${safeName(d.title)}.${ext}`, b, { binary: true }); files++; } }
+          catch (er) { missing++; }
+          const st = $("#pe-status"); if (st) st.textContent = `جارٍ تجهيز الملف… ${files} وثيقة`;
+        }
+      }
+      if (I.capped) rows.push([s.name, g.name, it.name, "", `بعد تطبيق السقف`, fmtPts(I.total)]);
+    }
+    rows.push([], ["", "", "مجموع الأعمال البيداغوجية", "", `الحد الأدنى ${R.field.minPed}`, fmtPts(R.sec.ped)], ["", "", "مجموع نشاطات البحث", "", `الحد الأدنى ${R.field.minRes}`, fmtPts(R.sec.res)], ["", "", "المجموع العام", "", R.ready ? "الملف مستوفٍ" : "الملف غير مستوفٍ", fmtPts(R.sec.ped + R.sec.res)]);
+    zip.file(`${root}/جدول النقاط.csv`, "﻿" + rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n"));
+    const blob = await zip.generateAsync({ type: "blob", compression: "STORE", mimeType: "application/zip" });
+    promoPkg = { blob, name: `Professora-promotion-${new Date().toISOString().slice(0, 10)}.zip`, files, missing };
+    const canShare = !!(navigator.canShare && window.File);
+    $("#modalLayer .content").innerHTML = `<p class="help">الملف جاهز: ${files} وثيقة مرتبة في مجلدات حسب محاور الشبكة وبنودها، مع «جدول النقاط.csv» (يُفتح في Excel أو Numbers)${missing ? `. تعذر جلب ${missing} ملف أصلي` : ""}. الحجم ${fmtSize(blob.size)}.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${canShare ? `<button class="btn primary" data-act="promo-share">حفظ في الملفات</button>` : ""}<button class="btn ${canShare ? "" : "primary"}" data-act="promo-save">تنزيل</button></div>`;
+  } catch (er) { console.error(er); const st = $("#pe-status"); if (st) st.textContent = "تعذر التصدير: " + (er.message || er); }
+}
+async function sharePromo() {
+  const f = new File([promoPkg.blob], promoPkg.name, { type: "application/zip" });
+  if (navigator.canShare?.({ files: [f] })) { try { await navigator.share({ files: [f], title: "ملف الترقية" }); return; } catch (er) { if (er.name === "AbortError") return; } }
+  await saveFile(promoPkg.name, promoPkg.blob);
+}
+
 /* ============================== لوحة الوثيقة ============================== */
 const opts = (kind, val, empty = "— غير محدد —") => `<option value="">${empty}</option>` + S.tax[kind].map(e => `<option value="${e.id}" ${e.id === val ? "selected" : ""}>${esc(kind === "domains" ? domainPath(e.id) : e.name)}</option>`).join("");
 const SRC = { pdf: "طبقة نص PDF", "ocr-claude": "تعرف ضوئي بواسطة Claude", "ocr-tesseract": "تعرف ضوئي محلي (Tesseract)", docx: "ملف Word", text: "ملف نصي", none: "لا يوجد نص — يمكن إعادة التعرف الضوئي" };
@@ -1068,6 +1417,7 @@ function renderDrawer() {
         ${d.file && /pdf|image/.test(d.mime) ? `<button class="btn small ghost" data-act="reocr">إعادة التعرف الضوئي</button>` : ""}
       </div>
       ${sug ? suggestBox(d, sug) : ""}
+      ${!d.demo ? (() => { const es = P().entries.filter(e => e.docId === d.id); return `<div class="field"><label>ملف الترقية (بروفيسورا)</label>${es.length ? es.map(e => `<div class="chip" style="justify-content:space-between">${esc(promoItem(e.item)?.name || "")}<button data-act="promo-rm" data-entry="${e.id}" aria-label="إزالة">×</button></div>`).join("") : ""}<div style="display:flex;gap:6px"><select id="f-promo" class="sel" style="flex:1;height:34px;min-width:0"><option value="">— أضف إلى بند —</option>${PROMO_GRID.sections.map(sc => sc.groups.map(g => `<optgroup label="${esc(g.name)}">${g.items.map(it => `<option value="${it.id}" ${promoGuess(d)?.id === it.id && !es.length ? "selected" : ""}>${esc(it.name)}</option>`).join("")}</optgroup>`).join("")).join("")}</select><button class="btn small" data-act="promo-add-doc">إضافة</button></div></div>`; })() : ""}
       ${d.summary ? `<div class="field"><label>ملخص</label><div class="textview" style="white-space:normal">${esc(d.summary)}</div></div>` : ""}
       <dl class="facts"><dt>اسم الملف</dt><dd>${esc(d.filename)}</dd><dt>الحجم</dt><dd class="num">${fmtSize(d.size)} · ${d.pages || 1} صفحة</dd><dt>مصدر النص</dt><dd>${esc(SRC[d.textSource] || "—")}</dd><dt>أُضيفت</dt><dd>${esc(fmtDate(d.added.slice(0, 10)))}</dd><dt>البصمة</dt><dd class="mono" style="font-size:11px">${esc((d.hash || "").slice(0, 16)) || "—"}</dd></dl>
     </div>` : ""}
@@ -1433,6 +1783,7 @@ async function importSync(file) {
     const rt = m.tax || {}; const remoteNewer = (rt.modified || "") > (S.tax.modified || "");
     for (const k of ["domains", "types", "corrs", "tags", "views"]) for (const e of rt[k] || []) { const i = S.tax[k].findIndex(x => x.id === e.id); if (i === -1) S.tax[k].push(e); else if (remoteNewer) S.tax[k][i] = e; }
     if (remoteNewer && rt.settings) S.tax.settings = { ...S.tax.settings, ...rt.settings };
+    if (remoteNewer && rt.promo) S.tax.promo = rt.promo;
     const tomb = S.tax.deleted ||= {}; for (const [id, t] of Object.entries(rt.deleted || {})) if (!tomb[id] || tomb[id] < t) tomb[id] = t;
     // المحذوفات
     for (const d of [...S.docs]) { const t = tomb[d.id]; if (t && t >= stamp(d)) { try { await S.store.delFile(d.file); await S.store.deleteDoc(d.id); } catch (e) {} S.docs = S.docs.filter(x => x.id !== d.id); r.removed++; } }
@@ -1502,6 +1853,17 @@ document.addEventListener("click", async e => {
     case "pick-all": (S._rows || []).forEach(x => S.picked.add(x.id)); renderMain(); break;
     case "pick-none": S.picked.clear(); S.confirmBulk = null; renderMain(); break;
     case "bulk-edit": openBulkEdit(); break;
+    case "promo-add": openPromoPicker(t.dataset.item); break;
+    case "promo-pick": { const doc = allDocs().find(x => x.id === t.dataset.doc); if (doc) { P().entries.push(newEntry(S.promoPick, doc)); await persistTax(); closeModal(); renderMain(); renderSide(); } break; }
+    case "promo-manual": P().entries.push(newEntry(t.dataset.item, null)); await persistTax(); renderMain(); break;
+    case "promo-rm": { P().entries = P().entries.filter(x => x.id !== t.dataset.entry); await persistTax(); renderSide(); renderMain(); if (S.open) renderDrawer(); break; }
+    case "promo-accept": { const doc = allDocs().find(x => x.id === t.dataset.doc); const item = $(`[data-sugitem="${t.dataset.doc}"]`)?.value; if (doc && item) { P().entries.push(newEntry(item, doc)); await persistTax(); renderSide(); renderMain(); } break; }
+    case "promo-accept-all": { let n = 0; for (const { d: doc } of promoSuggestions()) { const item = $(`[data-sugitem="${doc.id}"]`)?.value || promoGuess(doc)?.id; if (item) { P().entries.push(newEntry(item, doc)); n++; } } await persistTax(); renderSide(); renderMain(); toast(`أضيفت ${n} وثيقة إلى ملف الترقية. راجع صنف المقالات وترتيبك بين المؤلفين.`, 6000); break; }
+    case "promo-dismiss": P().dismissed.push(t.dataset.doc); await persistTax(); renderMain(); break;
+    case "promo-export": buildPromoExport(); break;
+    case "promo-share": sharePromo(); break;
+    case "promo-save": await saveFile(promoPkg.name, promoPkg.blob); break;
+    case "promo-add-doc": { const item = $("#f-promo")?.value; if (d && item) { P().entries.push(newEntry(item, d)); await persistTax(); renderSide(); if (S.sel.kind === "promo") renderMain(); renderDrawer(); toast("أضيفت إلى ملف الترقية"); } break; }
     case "bulk-apply": await applyBulkEdit(); break;
     case "bulk-trash": { const ds = pickedDocs(); await moveToTrash(ds); endSelect(); render(); toast(`نُقلت ${ds.length} وثيقة إلى سلة المحذوفات`); break; }
     case "bulk-restore": { const ds = pickedDocs(); await restoreDocs(ds); endSelect(); render(); toast(`استُعيدت ${ds.length} وثيقة`); break; }
@@ -1540,6 +1902,7 @@ document.addEventListener("click", async e => {
 });
 document.addEventListener("input", e => {
   const t = e.target; const d = S.open ? allDocs().find(x => x.id === S.open) : null;
+  if (t.id === "pp-q") { const q = norm(t.value).trim(); document.querySelectorAll("#pp-list .sim").forEach(b => b.hidden = q && !b.dataset.q.includes(q)); return; }
   if (t.id === "q") { S.q = t.value; S.page = 1; if (S.q && S.sort === "added-desc") S.sort = "relevance"; if (!S.q && S.sort === "relevance") S.sort = "added-desc"; renderMainDeb(); return; }
   if (t.dataset.f && d && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t.type !== "date") { d[t.dataset.f] = t.value; saveField(d); }
 });
@@ -1548,6 +1911,14 @@ document.addEventListener("change", async e => {
   const t = e.target; const d = S.open ? allDocs().find(x => x.id === S.open) : null;
   if (t.id === "sortSel") { S.sort = t.value; saveUI(); renderMain(); return; }
   if (t.id === "fileInput") { importFiles(t.files); t.value = ""; return; }
+  if (t.id === "promo-field") { P().field = t.value; await persistTax(); renderMain(); renderSide(); return; }
+  if (t.id === "promo-mca") { P().mcaDate = t.value; await persistTax(); renderMain(); renderSide(); return; }
+  if (t.dataset.pe) {
+    const e = P().entries.find(x => x.id === t.dataset.pe); if (!e) return;
+    const k = t.dataset.pf; e[k] = t.type === "checkbox" ? t.checked : t.value;
+    if (k === "opt") delete e.guess;
+    await persistTax(); renderMain(); renderSide(); return;
+  }
   if (t.id === "syncFile") { if (t.files[0]) importSync(t.files[0]); t.value = ""; return; }
   if (t.id === "importBackup") { if (t.files[0]) importBackup(t.files[0]); return; }
   if (t.dataset.f && d && (t.tagName === "SELECT" || t.type === "date")) { d[t.dataset.f] = t.value || (t.type === "date" ? "" : null); await persistDoc(d); render(); return; }
