@@ -184,6 +184,16 @@ tr.picked td{background:var(--accent-2)}
 .promo-head p{margin:2px 0 0;color:var(--muted);font-size:13px}
 .promo-ctrl{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 .promo-ctrl .field span{font-size:12px;color:var(--muted)}
+.sen{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px}
+.sen summary{cursor:pointer;display:flex;gap:10px;align-items:center;font-size:14px}
+.sen summary span{color:var(--muted);font-size:13px}
+.sen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.sen-grid .field span{font-size:12px;color:var(--muted)}
+.sen-table{width:100%;max-width:560px;border-collapse:collapse;margin-top:10px;font-size:13px}
+.sen-table td{padding:5px 8px;border-bottom:1px solid var(--line)}
+.sen-table td:last-child{text-align:left;white-space:nowrap}
+.sen-table tr.tot td{font-weight:700;color:var(--accent);border-bottom:0}
+.sen-table small{color:var(--warn)}
 .promo-sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:12px}
 .pmeter{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
 .pmeter .pm-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -391,7 +401,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const APP_VERSION = "1.5.0";
+const APP_VERSION = "1.6.0";
 // عند تشغيله كتطبيق منشور تُحمَّل المكتبات من مجلد vendor (تعمل دون إنترنت)، وإلا فمن شبكات CDN
 const VENDOR = location.protocol.startsWith("http") && !window.claude;
 const LIBS = VENDOR ? {
@@ -1198,10 +1208,69 @@ function promoCompute() {
   const cArts = arts.filter(e => e.opt === "C"); const keys = cArts.map(e => norm((e.journal || "") + "|" + (e.issue || "")).trim()).filter(k => k !== "|");
   const cDup = keys.length !== new Set(keys).size;
   const cMissing = cArts.some(e => !e.journal || !e.issue);
-  let years = null; if (p.mcaDate) years = (Date.now() - Date.parse(p.mcaDate)) / (365.25 * 864e5);
+  const sen = seniority(p); const years = sen ? sen.total : null;
   const adminOK = years !== null && years >= 5;
   const ready = adminOK && pubOK && supOK && mandOK && !cDup && sec.ped >= field.minPed && sec.res >= field.minRes;
-  return { p, field, items, sec, pubOK, supOK, mandOK, cDup, cMissing, years, adminOK, ready, live };
+  return { p, field, items, sec, pubOK, supOK, mandOK, cDup, cMissing, years, sen, adminOK, ready, live };
+}
+
+/* ---------- الأقدمية: الخدمة الفعلية + الزيادة في أقدمية الجنوب + الخدمة الوطنية ---------- */
+// الزيادة في الأقدمية لمناطق الجنوب (تُحتسب بالسنوات الكاملة، ولا تُمنح لإقامة تقل عن 3 سنوات):
+//   المرسوم التنفيذي 95-28: ولايات أدرار وتمنراست وتندوف وإيليزي، 6 أشهر عن كل سنة خدمة فعلية.
+//   المرسوم التنفيذي 95-300: بشار والبيض وورقلة وغرداية والنعامة والأغواط والوادي وبعض بلديات الجلفة وبسكرة، 3 أشهر عن كل سنة.
+// الخدمة الوطنية: تُعتبر فترة عمل وتُثبَّت بمدتها الفعلية بطلب من المعني (قرار وزاري مشترك 24 أوت 2023، تعليمة وزارية مشتركة رقم 10 في 14 أكتوبر 2024).
+const ZONES = {
+  "": { label: "لا يوجد", rate: 0 },
+  "95-28": { label: "المرسوم 95-28: أدرار، تمنراست، تندوف، إيليزي", rate: 6 },
+  "95-300": { label: "المرسوم 95-300: بشار، البيض، ورقلة، غرداية، النعامة، الأغواط، الوادي، وبعض بلديات الجلفة وبسكرة", rate: 3 },
+  "custom": { label: "نسبة أخرى أحددها", rate: null },
+};
+const YEAR_MS = 365.25 * 864e5;
+function seniority(p) {
+  if (!p.mcaDate) return null;
+  const now = Date.now(), mca = Date.parse(p.mcaDate);
+  const eff = Math.max(0, (now - mca) / YEAR_MS);
+  const z = p.zone || {}; let zoneYears = 0, zoneMonths = 0, zoneNote = "";
+  if (z.decree) {
+    const rate = z.decree === "custom" ? Math.max(0, +z.rate || 0) : ZONES[z.decree].rate;
+    const zs = Date.parse(z.start || ""), ze = z.end ? Date.parse(z.end) : now;
+    if (isFinite(zs) && ze > zs) {
+      const residence = (ze - zs) / YEAR_MS;
+      if (residence < 3) zoneNote = "لا تُمنح الزيادة لإقامة تقل عن 3 سنوات";
+      else {
+        // الزيادة تخص سنوات الخدمة في المنطقة بصفة أستاذ محاضر «أ» (منذ تاريخ التعيين)
+        zoneYears = Math.floor(Math.max(0, (Math.min(ze, now) - Math.max(zs, mca)) / YEAR_MS));
+        zoneMonths = zoneYears * rate;
+      }
+    } else zoneNote = "أدخل تاريخ بداية العمل في المنطقة";
+  }
+  const nsMonths = p.ns?.use ? Math.max(0, +p.ns.months || 0) : 0;
+  const total = eff + zoneMonths / 12 + nsMonths / 12;
+  const remaining = Math.max(0, 5 - total);
+  const reachDate = remaining > 0 ? new Date(now + remaining * YEAR_MS).toISOString().slice(0, 10) : null;
+  return { eff, zoneYears, zoneMonths, zoneNote, nsMonths, total, reachDate };
+}
+// تمييز العدد بالعربية: سنة واحدة، سنتان، 3 سنوات، 11 سنة · شهر واحد، شهران، 3 أشهر، 11 شهراً
+const arCount = (n, [one, two, few, many]) => n === 1 ? one : n === 2 ? two : n <= 10 ? `${n} ${few}` : `${n} ${many}`;
+const ym = y => { const m = Math.round(y * 12); const a = Math.floor(m / 12), b = m % 12; return [a ? arCount(a, ["سنة واحدة", "سنتان", "سنوات", "سنة"]) : "", b ? arCount(b, ["شهر واحد", "شهران", "أشهر", "شهراً"]) : ""].filter(Boolean).join(" و") || "0"; };
+function seniorityPanel(p, sen) {
+  const z = p.zone || {}, ns = p.ns || {};
+  return `<details class="sen" ${p.senOpen === false ? "" : "open"}><summary><b>الأقدمية</b> <span class="num">${sen ? ym(sen.total) + " من 5 سنوات" : "أدخل تاريخ التعيين"}</span></summary>
+    <div class="sen-grid">
+      <label class="field"><span>تاريخ التعيين أستاذاً محاضراً قسم «أ»</span><input id="promo-mca" type="date" class="sel" value="${esc(p.mcaDate || "")}"></label>
+      <label class="field" style="grid-column:span 2"><span>العمل في منطقة تمنح زيادة في الأقدمية</span><select class="sel" data-sen="zone.decree">${Object.entries(ZONES).map(([k, v]) => `<option value="${k}" ${String(z.decree || "") === k ? "selected" : ""}>${esc(v.label)}${v.rate ? ` (${v.rate} أشهر / سنة)` : ""}</option>`).join("")}</select></label>
+      ${z.decree ? `<label class="field"><span>بداية العمل في المنطقة</span><input type="date" class="sel" data-sen="zone.start" value="${esc(z.start || "")}"></label>
+        <label class="field"><span>نهايته (فارغ = حتى الآن)</span><input type="date" class="sel" data-sen="zone.end" value="${esc(z.end || "")}"></label>
+        ${z.decree === "custom" ? `<label class="field"><span>أشهر الزيادة عن كل سنة</span><input type="number" min="0" max="12" class="sel" data-sen="zone.rate" value="${esc(z.rate || "")}"></label>` : ""}` : ""}
+      <label class="field"><span>مدة الخدمة الوطنية (بالأشهر)</span><input type="number" min="0" max="48" class="sel" data-sen="ns.months" value="${esc(ns.months || "")}" placeholder="مثال: 18"></label>
+      <label class="pck" style="align-self:end;padding-bottom:8px"><input type="checkbox" data-sen="ns.use" ${ns.use ? "checked" : ""}> احتسابها في أقدمية الترقية</label>
+    </div>
+    ${sen ? `<table class="sen-table"><tr><td>الخدمة الفعلية منذ التعيين</td><td class="num">${ym(sen.eff)}</td></tr>
+      ${z.decree ? `<tr><td>الزيادة في أقدمية الجنوب${sen.zoneYears ? ` (${arCount(sen.zoneYears, ["سنة كاملة", "سنتان كاملتان", "سنوات كاملة", "سنة كاملة"])} × ${z.decree === "custom" ? (+z.rate || 0) : ZONES[z.decree].rate} أشهر)` : ""}</td><td class="num">${sen.zoneNote ? `<small>${esc(sen.zoneNote)}</small>` : "+ " + ym(sen.zoneMonths / 12)}</td></tr>` : ""}
+      ${ns.use ? `<tr><td>الخدمة الوطنية</td><td class="num">+ ${ym(sen.nsMonths / 12)}</td></tr>` : ""}
+      <tr class="tot"><td>الأقدمية المحتسبة</td><td class="num">${ym(sen.total)}</td></tr></table>
+      <p class="help" style="margin:8px 0 0">${sen.reachDate ? `تستوفي شرط الخمس سنوات ابتداءً من <b class="num">${esc(fmtDate(sen.reachDate))}</b>. ` : "شرط الأقدمية مستوفى. "}الزيادة في الأقدمية: 6 أشهر عن كل سنة خدمة فعلية كاملة (المرسوم التنفيذي 95-28) أو 3 أشهر (المرسوم التنفيذي 95-300)، ولا تُمنح لإقامة تقل عن 3 سنوات. الخدمة الوطنية تُثبَّت فترةَ عمل بمدتها الفعلية بطلب منك (قرار وزاري مشترك 24 أوت 2023، تعليمة وزارية مشتركة رقم 10 في 14 أكتوبر 2024). يبقى القرار لمصلحة المستخدمين في جامعتك.</p>` : ""}
+  </details>`;
 }
 
 /* ---------- الجلب التلقائي من الأرشيف ---------- */
@@ -1264,19 +1333,19 @@ function gapHints(R, secId, need) {
 function renderPromo() {
   const R = promoCompute(); const p = R.p; const f = R.field;
   const sugg = promoSuggestions();
-  let h = `<div class="promo-head"><div><h2>بروفيسورا</h2><p>ملف الترقية إلى رتبة أستاذ التعليم العالي · ${esc(PROMO_GRID.session)}</p></div>
+  let h = `<div class="promo-head"><div><h2>بروفيسورا</h2></div>
     <div class="promo-ctrl">
       <label class="field" style="min-width:200px"><span>ميدان التكوين</span><select id="promo-field" class="sel">${Object.entries(PROMO_GRID.fields).map(([k, v]) => `<option value="${k}" ${p.field === k ? "selected" : ""}>${v.label}</option>`).join("")}</select></label>
-      <label class="field"><span>تاريخ التعيين أستاذاً محاضراً قسم «أ»</span><input id="promo-mca" type="date" class="sel" value="${esc(p.mcaDate || "")}"></label>
       <button class="btn" data-act="promo-export">تصدير الملف</button>
     </div></div>`;
+  h += seniorityPanel(p, R.sen);
   h += `<div class="promo-sum">
     ${meter("الأعمال البيداغوجية", R.sec.ped, f.minPed)}
     ${meter("نشاطات البحث", R.sec.res, f.minRes)}
     <div class="pmeter verdict ${R.ready ? "ok" : ""}"><div class="pm-top"><span>المجموع</span><b class="num">${fmtPts(R.sec.ped + R.sec.res)}</b></div><p>${R.ready ? "الملف مستوفٍ لكل الشروط والحد الأدنى من النقاط حسب هذه الشبكة." : "الملف غير مستوفٍ بعد. راجع الشروط أدناه."}</p></div>
   </div>
   <ul class="promo-checks">
-    ${check(R.adminOK, "الأقدمية: 5 سنوات خدمة فعلية بصفة أستاذ محاضر قسم «أ»", R.years === null ? "أدخل تاريخ التعيين أعلاه" : `${fmtPts(Math.floor(R.years * 10) / 10)} سنة`)}
+    ${check(R.adminOK, "الأقدمية: 5 سنوات خدمة فعلية بصفة أستاذ محاضر قسم «أ»", R.years === null ? "أدخل تاريخ التعيين في لوحة الأقدمية" : `${ym(R.years)}${R.sen.zoneMonths || R.sen.nsMonths ? " مع الزيادات" : ""}`)}
     ${check(R.pubOK, "الحد الأدنى للنشر (شرط القبول العلمي)", p.field === "st" ? "مقال أ+ مؤلفاً رئيسياً أو ثانياً، أو مقال أ ومقالان ب" : "مقال أ (مؤلفاً رئيسياً أو ثانياً)، أو مقال ب ومقال ج، أو مقالان ج مؤلفاً رئيسياً")}
     ${check(R.supOK, "الحد الأدنى للتأطير", "أطروحة دكتوراه مناقشة (تأطير أو إشراف مشترك)، أو مذكرتا ماجستير، أو أربع مذكرات ماستر")}
     ${check(R.mandOK, "نشر مقال إجباري", p.field === "st" ? "في مجلة مصنفة أ+ أو أ أو ب" : "في مجلة مصنفة أ أو ب أو ج")}
@@ -1912,6 +1981,11 @@ document.addEventListener("change", async e => {
   if (t.id === "sortSel") { S.sort = t.value; saveUI(); renderMain(); return; }
   if (t.id === "fileInput") { importFiles(t.files); t.value = ""; return; }
   if (t.id === "promo-field") { P().field = t.value; await persistTax(); renderMain(); renderSide(); return; }
+  if (t.dataset.sen) {
+    const p = P(); const [grp, key] = t.dataset.sen.split("."); p[grp] ||= {};
+    p[grp][key] = t.type === "checkbox" ? t.checked : t.value;
+    await persistTax(); renderMain(); renderSide(); return;
+  }
   if (t.id === "promo-mca") { P().mcaDate = t.value; await persistTax(); renderMain(); renderSide(); return; }
   if (t.dataset.pe) {
     const e = P().entries.find(x => x.id === t.dataset.pe); if (!e) return;

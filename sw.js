@@ -1,6 +1,6 @@
 /* أرشيفي — service worker: يُبقي التطبيق متاحاً دون اتصال ويوصل التحديثات تلقائياً.
    ارفع VERSION بعد كل نشر حتى تلتقط الأجهزة الملفات الجديدة (وحدّث APP_VERSION في index.html). */
-const VERSION = 'arshifi-v9';
+const VERSION = 'arshifi-v10';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/favicon.ico', 'icons/arshifi-180.png', 'icons/arshifi-192.png', 'icons/arshifi-512.png',
   'vendor/pdf.min.js', 'vendor/pdf.worker.min.js', 'vendor/mammoth.browser.min.js', 'vendor/jszip.min.js', 'vendor/tesseract/tesseract.min.js', 'vendor/tesseract/worker.min.js'];
 const FONTS = 'arshifi-fonts';
