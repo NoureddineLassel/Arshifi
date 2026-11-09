@@ -480,6 +480,8 @@ class CloudStore {
 //   records/<id>.json   بطاقة فهرسة لكل وثيقة (البيانات + النص + الصورة المصغرة)
 //   documents/          الملفات الأصلية بأسماء مقروءة: «0007 - عنوان الوثيقة.pdf»
 const FS_OK = typeof window.showDirectoryPicker === "function";
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const NO_FOLDER_MSG = IS_IOS ? "على الآيباد والآيفون لا يسمح أي متصفح (ولا Chrome) لتطبيقات الويب بالكتابة في مجلدات iCloud Drive، لأن Apple تفرض محرك Safari على كل المتصفحات. اختر «داخل المتصفح» هنا." : "هذا المتصفح لا يسمح للتطبيقات بالكتابة في المجلدات. افتح أرشيفي في Chrome أو Edge على الماك لاستعمال هذا الخيار.";
 const safeName = s => String(s || "").replace(/[\/\\:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || "وثيقة";
 const README_TXT = `هذا المجلد هو أرشيفك في تطبيق «أرشيفي».
 
@@ -1378,7 +1380,7 @@ function pickError(title, body) {
   else toast(title + " " + body, 9000);
 }
 async function chooseFolder(migrate) {
-  if (!FS_OK) { pickError("هذا المتصفح لا يدعم اختيار المجلدات.", "افتح أرشيفي في Google Chrome أو Microsoft Edge (وليس Safari)."); return; }
+  if (!FS_OK) { pickError("اختيار المجلدات غير متاح هنا.", NO_FOLDER_MSG); return; }
   if (window.top !== window) { pickError("التطبيق مفتوح داخل نافذة معاينة.", "نوافذ المعاينة لا تسمح باختيار المجلدات. افتح أرشيفي مباشرة في Chrome: من رابط Netlify، أو بسحب ملف index.html إلى نافذة Chrome."); return; }
   const t0 = Date.now(); let h;
   try { h = await window.showDirectoryPicker({ id: "arshifi", mode: "readwrite", startIn: "documents" }); }
@@ -1410,7 +1412,7 @@ function showWelcome() {
     <div class="choice">
     <article class="rec" ${FS_OK ? 'role="button" tabindex="0" data-act="pick-folder"' : ""}><h3>مجلد على جهازك أو في iCloud Drive <span class="badge">مستحسن</span></h3>
       <p>أنشئ في Finder مجلداً باسم «أرشيفي» داخل iCloud Drive، ثم اختره هنا (اختر المجلد الفرعي نفسه، لا iCloud Drive كله ولا «المستندات»، فـ Chrome يرفض المجلدات الرئيسية). تُحفظ فيه الملفات الأصلية بأسماء مقروءة مع بطاقات فهرستها، فيتزامن الأرشيف تلقائياً بين أجهزة الماك. على جهاز ماك آخر اختر المجلد نفسه فيفتح الأرشيف كما هو.</p>
-      ${FS_OK ? `<button class="btn primary" data-act="pick-folder">اختيار المجلد…</button>` : `<p style="color:var(--warn)">هذا المتصفح لا يسمح للتطبيقات بالكتابة في المجلدات. افتح أرشيفي في Chrome أو Edge لاستعمال هذا الخيار.</p>`}</article>
+      ${FS_OK ? `<button class="btn primary" data-act="pick-folder">اختيار المجلد…</button>` : `<p style="color:var(--warn)">${NO_FOLDER_MSG}</p>`}</article>
     <article role="button" tabindex="0" data-act="use-browser"><h3>داخل المتصفح فقط</h3><p>تُحفظ الوثائق في هذا المتصفح على هذا الجهاز، دون مزامنة. يمكنك نقلها إلى مجلد لاحقاً من الإعدادات.</p><button class="btn" data-act="use-browser">الحفظ في المتصفح</button></article>
   </div></div>`);
 }
